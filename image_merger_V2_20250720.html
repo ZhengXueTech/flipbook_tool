@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6張圖片拼接A4工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .upload-subtext {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .image-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            aspect-ratio: 1;
+        }
+
+        .image-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-item .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #ff4757;
+            transition: all 0.3s ease;
+        }
+
+        .image-item .remove-btn:hover {
+            background: #ff4757;
+            color: white;
+        }
+
+        .image-item .number {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .layout-section {
+            padding: 30px 40px;
+            background: #f0f2ff;
+            border-top: 1px solid #e0e6ed;
+        }
+
+        .layout-options {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .layout-option {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 220px;
+        }
+
+        .layout-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .layout-option.active {
+            border-color: #667eea;
+            background: #f8f9ff;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .layout-option h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .layout-option p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .layout-preview {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .layout-preview .mini-rect {
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        .layout-preview.square .mini-rect {
+            width: 15px;
+            height: 15px;
+        }
+
+        .layout-preview.rectangle .mini-rect {
+            width: 12px;
+            height: 14px; /* 調整為8.5:10的比例 */
+        }
+
+        .preview-section {
+            padding: 40px;
+            background: #f8f9ff;
+            border-top: 1px solid #e0e6ed;
+        }
+
+        .a4-preview {
+            max-width: 600px;
+            margin: 0 auto 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            aspect-ratio: 297/210; /* A4橫向 */
+            transition: all 0.3s ease;
+            position: relative; /* 為浮水印定位 */
+        }
+
+        .a4-preview.portrait {
+            aspect-ratio: 210/297; /* A4縱向 */
+        }
+
+        /* 浮水印樣式 */
+        .watermark {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.8em;
+            color: rgba(102, 126, 234, 0.6);
+            font-weight: 500;
+            pointer-events: none;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 15px;
+            height: 100%;
+        }
+
+        .grid-item {
+            background: #f5f5f5;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            color: #999;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .grid-item.filled {
+            /* 預設無外框線 */
+            background: #f0f2ff;
+        }
+
+        .grid-item.filled.with-border {
+            border: 2px solid #667eea;
+        }
+
+        .grid-item.filled.with-border img {
+            /* 移除圖片本身的邊框，使用容器的藍紫色邊框 */
+        }
+
+        /* 長方形佈局樣式 - 分兩頁顯示 */
+        .grid-container.rectangle {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .page-separator {
+            text-align: center;
+            margin: 20px 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .two-page-layout {
+            display: none;
+        }
+
+        .two-page-layout.active {
+            display: block;
+        }
+
+        .controls {
+            padding: 40px;
+            background: #f8f9ff;
+            border-top: 1px solid #e0e6ed;
+            text-align: center;
+        }
+
+        .download-options {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .download-btn.secondary {
+            background: linear-gradient(135deg, #20bf6b 0%, #26d0ce 100%);
+            box-shadow: 0 5px 15px rgba(32, 191, 107, 0.3);
+        }
+
+        .download-btn.tertiary {
+            background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
+            box-shadow: 0 5px 15px rgba(253, 121, 168, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .download-btn.secondary:hover {
+            box-shadow: 0 8px 25px rgba(32, 191, 107, 0.4);
+        }
+
+        .download-btn.tertiary:hover {
+            box-shadow: 0 8px 25px rgba(253, 121, 168, 0.4);
+        }
+
+        .download-btn:disabled {
+            background: #ccc !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .image-count {
+            font-size: 1.1em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .clear-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            cursor: pointer;
+            margin-left: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #ff3742;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .upload-area {
+                padding: 30px 20px;
+            }
+            
+            .image-preview {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 10px;
+            }
+
+            .a4-preview {
+                padding: 20px;
+            }
+
+            .grid-container {
+                gap: 10px;
+            }
+
+            .download-options {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📸 6張圖片拼接A4工具</h1>
+            <p>將6張圖片排列在A4紙上，支援單頁和雙頁排版</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">點擊選擇圖片或拖放到此處</div>
+                <div class="upload-subtext">支援 JPG、PNG、GIF 格式，需要6張圖片</div>
+            </div>
+            
+            <input type="file" id="fileInput" accept="image/*" multiple>
+            
+            <div class="image-count" id="imageCount">
+                已選擇 0 張圖片
+            </div>
+            
+            <div class="image-preview" id="imagePreview"></div>
+        </div>
+
+        <div class="layout-section">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #667eea;">選擇排版方式</h3>
+            <div class="layout-options">
+                <div class="layout-option active" id="squareLayout">
+                    <h4>🟦 正方形排版 (單頁)</h4>
+                    <p>8.5cm × 8.5cm</p>
+                    <p>3列 × 2行 = 6張圖片</p>
+                    <p style="color: #20bf6b; font-weight: bold;">A4橫向，單頁完成</p>
+                    <div class="layout-preview square">
+                        <div class="mini-rect"></div>
+                        <div class="mini-rect"></div>
+                        <div class="mini-rect"></div>
+                        <div class="mini-rect"></div>
+                        <div class="mini-rect"></div>
+                        <div class="mini-rect"></div>
+                    </div>
+                </div>
+                
+                <div class="layout-option" id="rectangleLayout">
+                    <h4>🟪 長方形排版 (雙頁)</h4>
+                    <p>8.5cm × 10cm</p>
+                    <p>2列 × 2行 × 2頁 = 6張圖片</p>
+                    <p style="color: #fd79a8; font-weight: bold;">A4縱向，分兩頁列印</p>
+                    <div class="layout-preview rectangle">
+                        <div class="mini-rect"></div>
+                        <div class="mini-rect"></div>
+                        <div style="width: 4px; height: 14px; background: #ccc;"></div>
+                        <div class="mini-rect"></div>
+                        <div class="mini-rect"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 外框線開關 -->
+            <div style="text-align: center; margin-top: 25px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h4 style="color: #667eea; margin-bottom: 15px;">🎨 外框線設定</h4>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 1em; color: #555;">
+                        <input type="checkbox" id="borderToggle" checked style="transform: scale(1.2);">
+                        <span>顯示圖片外框線</span>
+                    </label>
+                    <span style="color: #888; font-size: 0.9em;">(建議開啟，方便裁切)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <!-- 單頁預覽 -->
+            <div id="singlePagePreview">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #667eea;" id="previewTitle">A4預覽 (29.7cm x 21.0cm - 橫向 3x2排列)</h3>
+                <div class="a4-preview" id="a4Preview">
+                    <div class="watermark">何老師教學@XueTech</div>
+                    <div class="grid-container" id="gridContainer">
+                        <div class="grid-item" data-index="0">位置 1</div>
+                        <div class="grid-item" data-index="1">位置 2</div>
+                        <div class="grid-item" data-index="2">位置 3</div>
+                        <div class="grid-item" data-index="3">位置 4</div>
+                        <div class="grid-item" data-index="4">位置 5</div>
+                        <div class="grid-item" data-index="5">位置 6</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 雙頁預覽 -->
+            <div id="twoPagePreview" class="two-page-layout">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #667eea;">A4預覽 (21.0cm x 29.7cm - 縱向雙頁排列)</h3>
+                
+                <h4 style="text-align: center; color: #667eea; margin-bottom: 15px;">📄 第一頁</h4>
+                <div class="a4-preview portrait">
+                    <div class="watermark">何老師教學@XueTech</div>
+                    <div class="grid-container rectangle">
+                        <div class="grid-item" data-index="0">位置 1</div>
+                        <div class="grid-item" data-index="1">位置 2</div>
+                        <div class="grid-item" data-index="2">位置 3</div>
+                        <div class="grid-item" data-index="3">位置 4</div>
+                    </div>
+                </div>
+
+                <div class="page-separator">📄 第二頁</div>
+                
+                <div class="a4-preview portrait">
+                    <div class="watermark">何老師教學@XueTech</div>
+                    <div class="grid-container rectangle">
+                        <div class="grid-item" data-index="4">位置 5</div>
+                        <div class="grid-item" data-index="5">位置 6</div>
+                        <div class="grid-item" style="background: #f0f0f0; border: 2px dashed #ccc;">空白</div>
+                        <div class="grid-item" style="background: #f0f0f0; border: 2px dashed #ccc;">空白</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="download-options">
+                <button class="download-btn" id="pdfBtn" disabled>
+                    📄 下載PDF文件 (推薦)
+                </button>
+                <button class="download-btn secondary" id="imageBtn" disabled>
+                    🖼️ 下載PNG圖片
+                </button>
+                <button class="download-btn tertiary" id="printBtn" disabled>
+                    🖨️ 直接列印
+                </button>
+            </div>
+            
+            <div class="status" id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedImages = [];
+        let currentLayout = 'square'; // 'square' or 'rectangle'
+        let showBorder = true; // 外框線開關狀態
+        const maxImages = 6;
+
+        // 取得所有DOM元素
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const gridContainer = document.getElementById('gridContainer');
+        const a4Preview = document.getElementById('a4Preview');
+        const squareLayout = document.getElementById('squareLayout');
+        const rectangleLayout = document.getElementById('rectangleLayout');
+        const borderToggle = document.getElementById('borderToggle');
+        const previewTitle = document.getElementById('previewTitle');
+        const singlePagePreview = document.getElementById('singlePagePreview');
+        const twoPagePreview = document.getElementById('twoPagePreview');
+        const pdfBtn = document.getElementById('pdfBtn');
+        const imageBtn = document.getElementById('imageBtn');
+        const printBtn = document.getElementById('printBtn');
+        const status = document.getElementById('status');
+        const imageCount = document.getElementById('imageCount');
+
+        // 排版選擇事件
+        squareLayout.addEventListener('click', () => {
+            currentLayout = 'square';
+            updateLayoutSelection();
+            updateGridPreview();
+        });
+
+        rectangleLayout.addEventListener('click', () => {
+            currentLayout = 'rectangle';
+            updateLayoutSelection();
+            updateGridPreview();
+        });
+
+        // 外框線開關事件
+        borderToggle.addEventListener('change', (e) => {
+            showBorder = e.target.checked;
+            showStatus(showBorder ? '✅ 已開啟外框線' : '❌ 已關閉外框線', 'success');
+            // 立即更新預覽
+            updateGridPreview();
+        });
+
+        // 更新排版選擇狀態
+        function updateLayoutSelection() {
+            squareLayout.classList.toggle('active', currentLayout === 'square');
+            rectangleLayout.classList.toggle('active', currentLayout === 'rectangle');
+            
+            // 切換預覽顯示
+            if (currentLayout === 'square') {
+                singlePagePreview.style.display = 'block';
+                twoPagePreview.classList.remove('active');
+                previewTitle.textContent = 'A4預覽 (29.7cm x 21.0cm - 橫向 3x2排列)';
+                gridContainer.classList.remove('rectangle');
+                a4Preview.classList.remove('portrait');
+            } else {
+                singlePagePreview.style.display = 'none';
+                twoPagePreview.classList.add('active');
+            }
+        }
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 拖放功能
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        });
+
+        // 文件選擇事件
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        });
+
+        // 處理文件
+        function handleFiles(files) {
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
+            
+            if (selectedImages.length + imageFiles.length > maxImages) {
+                const remaining = maxImages - selectedImages.length;
+                if (remaining > 0) {
+                    imageFiles.splice(remaining);
+                    showStatus(`已選擇前${remaining}張圖片，最多只能選擇${maxImages}張圖片`, 'error');
+                } else {
+                    showStatus(`已達到最大數量${maxImages}張圖片`, 'error');
+                    return;
+                }
+            }
+
+            imageFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageData = {
+                        file: file,
+                        dataUrl: e.target.result,
+                        name: file.name
+                    };
+                    selectedImages.push(imageData);
+                    updateImagePreview();
+                    updateGridPreview();
+                    updateUI();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 更新圖片預覽
+        function updateImagePreview() {
+            imagePreview.innerHTML = '';
+            selectedImages.forEach((image, index) => {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                imageItem.innerHTML = `
+                    <img src="${image.dataUrl}" alt="${image.name}">
+                    <div class="number">${index + 1}</div>
+                    <button class="remove-btn" onclick="removeImage(${index})">×</button>
+                `;
+                imagePreview.appendChild(imageItem);
+            });
+        }
+
+        // 更新網格預覽
+        function updateGridPreview() {
+            if (currentLayout === 'square') {
+                updateSinglePagePreview();
+            } else {
+                updateTwoPagePreview();
+            }
+        }
+
+        // 更新單頁預覽
+        function updateSinglePagePreview() {
+            const gridItems = gridContainer.querySelectorAll('.grid-item');
+            gridItems.forEach((item, index) => {
+                item.innerHTML = '';
+                item.classList.remove('filled', 'with-border');
+                item.classList.remove('rectangle');
+                
+                if (selectedImages[index]) {
+                    const img = document.createElement('img');
+                    img.src = selectedImages[index].dataUrl;
+                    img.alt = selectedImages[index].name;
+                    item.appendChild(img);
+                    item.classList.add('filled');
+                    
+                    // 根據開關狀態添加外框線
+                    if (showBorder) {
+                        item.classList.add('with-border');
+                    }
+                } else {
+                    item.textContent = `位置 ${index + 1}`;
+                }
+            });
+        }
+
+        // 更新雙頁預覽
+        function updateTwoPagePreview() {
+            const page1Items = twoPagePreview.querySelectorAll('.a4-preview:first-of-type .grid-item');
+            const page2Items = twoPagePreview.querySelectorAll('.a4-preview:last-of-type .grid-item');
+            
+            // 第一頁 (前4張圖片)
+            page1Items.forEach((item, index) => {
+                item.innerHTML = '';
+                item.classList.remove('filled', 'with-border');
+                item.classList.add('rectangle'); // 確保添加rectangle類別
+                
+                if (selectedImages[index]) {
+                    const img = document.createElement('img');
+                    img.src = selectedImages[index].dataUrl;
+                    img.alt = selectedImages[index].name;
+                    item.appendChild(img);
+                    item.classList.add('filled');
+                    
+                    // 根據開關狀態添加外框線
+                    if (showBorder) {
+                        item.classList.add('with-border');
+                    }
+                } else {
+                    item.textContent = `位置 ${index + 1}`;
+                }
+            });
+
+            // 第二頁 (後2張圖片)
+            page2Items.forEach((item, index) => {
+                if (index < 2) { // 只有前兩個位置放圖片
+                    const imageIndex = index + 4;
+                    item.innerHTML = '';
+                    item.classList.remove('filled', 'with-border');
+                    item.classList.add('rectangle'); // 確保添加rectangle類別
+                    
+                    if (selectedImages[imageIndex]) {
+                        const img = document.createElement('img');
+                        img.src = selectedImages[imageIndex].dataUrl;
+                        img.alt = selectedImages[imageIndex].name;
+                        item.appendChild(img);
+                        item.classList.add('filled');
+                        
+                        // 根據開關狀態添加外框線
+                        if (showBorder) {
+                            item.classList.add('with-border');
+                        }
+                    } else {
+                        item.textContent = `位置 ${imageIndex + 1}`;
+                    }
+                }
+            });
+        }
+
+        // 移除圖片
+        function removeImage(index) {
+            selectedImages.splice(index, 1);
+            updateImagePreview();
+            updateGridPreview();
+            updateUI();
+        }
+
+        // 清除全部圖片
+        function clearAll() {
+            selectedImages = [];
+            updateImagePreview();
+            updateGridPreview();
+            updateUI();
+        }
+
+        // 更新UI狀態
+        function updateUI() {
+            const count = selectedImages.length;
+            imageCount.innerHTML = `已選擇 ${count} 張圖片`;
+            
+            if (count > 0) {
+                imageCount.innerHTML += '<button class="clear-btn" onclick="clearAll()">清除全部</button>';
+            }
+            
+            pdfBtn.disabled = count === 0;
+            imageBtn.disabled = count === 0;
+            printBtn.disabled = count === 0;
+            
+            if (count === maxImages) {
+                showStatus('已選擇6張圖片，可以下載文件了！', 'success');
+            }
+        }
+
+        // 顯示狀態訊息
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // 創建合併圖片
+        async function createMergedImage() {
+            const pixelsPerCm = 300 / 2.54; // 300 DPI conversion
+            
+            if (currentLayout === 'square') {
+                // 正方形排版: A4橫向, 單頁
+                return await createSinglePageImage(pixelsPerCm);
+            } else {
+                // 長方形排版: A4縱向, 雙頁
+                return await createTwoPageImages(pixelsPerCm);
+            }
+        }
+
+        // 創建單頁圖片
+        async function createSinglePageImage(pixelsPerCm) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const canvasWidth = Math.round(29.7 * pixelsPerCm);   // 3508px
+            const canvasHeight = Math.round(21.0 * pixelsPerCm);  // 2480px
+            const imageWidth = imageHeight = Math.round(8.5 * pixelsPerCm);
+            const cols = 3, rows = 2;
+            const borderWidth = Math.round(0.05 * pixelsPerCm); // 0.5mm 外框線寬度
+            
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // 設置白色背景
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // 計算佈局
+            const totalImageWidth = imageWidth * cols;
+            const totalImageHeight = imageHeight * rows;
+            const marginX = (canvasWidth - totalImageWidth) / (cols + 1);
+            const marginY = (canvasHeight - totalImageHeight) / (rows + 1);
+            
+            // 載入並繪製每張圖片
+            const promises = selectedImages.map((imageData, index) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const row = Math.floor(index / cols);
+                        const col = index % cols;
+                        const x = marginX + col * (imageWidth + marginX);
+                        const y = marginY + row * (imageHeight + marginY);
+                        
+                        // 繪製圖片
+                        ctx.drawImage(img, x, y, imageWidth, imageHeight);
+                        
+                        // 繪製外框線 (根據開關狀態) - 使用藍紫色
+                        if (showBorder) {
+                            ctx.strokeStyle = '#667eea'; // 藍紫色外框
+                            ctx.lineWidth = borderWidth;
+                            ctx.strokeRect(x, y, imageWidth, imageHeight);
+                        }
+                        
+                        resolve();
+                    };
+                    img.src = imageData.dataUrl;
+                });
+            });
+            
+            await Promise.all(promises);
+            return [canvas]; // 返回陣列保持一致性
+        }
+
+        // 創建雙頁圖片
+        async function createTwoPageImages(pixelsPerCm) {
+            const canvasWidth = Math.round(21.0 * pixelsPerCm);   // 2480px
+            const canvasHeight = Math.round(29.7 * pixelsPerCm);  // 3508px
+            const imageWidth = Math.round(8.5 * pixelsPerCm);     // 8.5cm
+            const imageHeight = Math.round(10 * pixelsPerCm);     // 10cm
+            const cols = 2, rows = 2;
+            const borderWidth = Math.round(0.05 * pixelsPerCm); // 0.5mm 外框線寬度
+            
+            // 第一頁 (4張圖片)
+            const canvas1 = document.createElement('canvas');
+            const ctx1 = canvas1.getContext('2d');
+            canvas1.width = canvasWidth;
+            canvas1.height = canvasHeight;
+            ctx1.fillStyle = 'white';
+            ctx1.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // 第二頁 (2張圖片)
+            const canvas2 = document.createElement('canvas');
+            const ctx2 = canvas2.getContext('2d');
+            canvas2.width = canvasWidth;
+            canvas2.height = canvasHeight;
+            ctx2.fillStyle = 'white';
+            ctx2.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // 計算佈局
+            const totalImageWidth = imageWidth * cols;
+            const totalImageHeight = imageHeight * rows;
+            const marginX = (canvasWidth - totalImageWidth) / (cols + 1);
+            const marginY = (canvasHeight - totalImageHeight) / (rows + 1);
+            
+            // 第一頁 - 繪製前4張圖片
+            const page1Promises = selectedImages.slice(0, 4).map((imageData, index) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const row = Math.floor(index / cols);
+                        const col = index % cols;
+                        const x = marginX + col * (imageWidth + marginX);
+                        const y = marginY + row * (imageHeight + marginY);
+                        
+                        // 繪製圖片
+                        ctx1.drawImage(img, x, y, imageWidth, imageHeight);
+                        
+                        // 繪製外框線 (根據開關狀態) - 使用藍紫色
+                        if (showBorder) {
+                            ctx1.strokeStyle = '#667eea'; // 藍紫色外框
+                            ctx1.lineWidth = borderWidth;
+                            ctx1.strokeRect(x, y, imageWidth, imageHeight);
+                        }
+                        
+                        resolve();
+                    };
+                    img.src = imageData.dataUrl;
+                });
+            });
+            
+            // 第二頁 - 繪製後2張圖片
+            const page2Promises = selectedImages.slice(4, 6).map((imageData, index) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const col = index % cols;
+                        const x = marginX + col * (imageWidth + marginX);
+                        const y = marginY; // 只放在第一行
+                        
+                        // 繪製圖片
+                        ctx2.drawImage(img, x, y, imageWidth, imageHeight);
+                        
+                        // 繪製外框線 (根據開關狀態) - 使用藍紫色
+                        if (showBorder) {
+                            ctx2.strokeStyle = '#667eea'; // 藍紫色外框
+                            ctx2.lineWidth = borderWidth;
+                            ctx2.strokeRect(x, y, imageWidth, imageHeight);
+                        }
+                        
+                        resolve();
+                    };
+                    img.src = imageData.dataUrl;
+                });
+            });
+            
+            await Promise.all([...page1Promises, ...page2Promises]);
+            return [canvas1, canvas2];
+        }
+
+        // PDF下載事件
+        pdfBtn.addEventListener('click', async () => {
+            if (selectedImages.length === 0) return;
+
+            try {
+                showStatus('正在生成PDF文件...', 'success');
+                
+                const canvases = await createMergedImage();
+                const { jsPDF } = window.jspdf;
+                let pdf;
+                
+                if (currentLayout === 'square') {
+                    // 正方形排版: A4橫向，單頁
+                    pdf = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'cm',
+                        format: 'a4'
+                    });
+                    const imgData = canvases[0].toDataURL('image/png');
+                    pdf.addImage(imgData, 'PNG', 0, 0, 29.7, 21.0);
+                } else {
+                    // 長方形排版: A4縱向，雙頁
+                    pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'cm',
+                        format: 'a4'
+                    });
+                    
+                    // 第一頁
+                    const imgData1 = canvases[0].toDataURL('image/png');
+                    pdf.addImage(imgData1, 'PNG', 0, 0, 21.0, 29.7);
+                    
+                    // 第二頁
+                    pdf.addPage();
+                    const imgData2 = canvases[1].toDataURL('image/png');
+                    pdf.addImage(imgData2, 'PNG', 0, 0, 21.0, 29.7);
+                }
+                
+                // 下載PDF
+                const layoutName = currentLayout === 'square' ? '單頁' : '雙頁';
+                pdf.save(`6張圖片拼接_${layoutName}_${new Date().toLocaleDateString()}.pdf`);
+                
+                showStatus('PDF文件下載成功！保證列印尺寸正確', 'success');
+            } catch (error) {
+                console.error('生成PDF文件失敗:', error);
+                showStatus('生成PDF文件失敗，請重試', 'error');
+            }
+        });
+
+        // PNG圖片下載事件
+        imageBtn.addEventListener('click', async () => {
+            if (selectedImages.length === 0) return;
+
+            try {
+                showStatus('正在生成PNG圖片...', 'success');
+                
+                const canvases = await createMergedImage();
+                
+                if (currentLayout === 'square') {
+                    // 單頁下載
+                    const imageDataUrl = canvases[0].toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = imageDataUrl;
+                    a.download = `6張圖片拼接_單頁_${new Date().toLocaleDateString()}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    // 雙頁分別下載
+                    canvases.forEach((canvas, index) => {
+                        const imageDataUrl = canvas.toDataURL('image/png');
+                        const a = document.createElement('a');
+                        a.href = imageDataUrl;
+                        a.download = `6張圖片拼接_第${index + 1}頁_${new Date().toLocaleDateString()}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    });
+                }
+                
+                showStatus('PNG圖片下載成功！', 'success');
+            } catch (error) {
+                console.error('生成PNG圖片失敗:', error);
+                showStatus('生成PNG圖片失敗，請重試', 'error');
+            }
+        });
+
+        // 直接列印事件
+        printBtn.addEventListener('click', async () => {
+            if (selectedImages.length === 0) return;
+
+            try {
+                showStatus('正在準備列印...', 'success');
+                
+                const canvases = await createMergedImage();
+                
+                if (currentLayout === 'square') {
+                    // 單頁列印
+                    const imageDataUrl = canvases[0].toDataURL('image/png');
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>列印圖片</title>
+                            <style>
+                                @media print {
+                                    @page {
+                                        size: A4 landscape;
+                                        margin: 0;
+                                    }
+                                    body {
+                                        margin: 0;
+                                        padding: 0;
+                                    }
+                                    img {
+                                        width: 100%;
+                                        height: 100vh;
+                                        object-fit: contain;
+                                    }
+                                }
+                                body {
+                                    margin: 0;
+                                    display: flex;
+                                    justify-content: center;
+                                    align-items: center;
+                                    min-height: 100vh;
+                                }
+                                img {
+                                    max-width: 100%;
+                                    max-height: 100vh;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <img src="${imageDataUrl}" onload="window.print();">
+                        </body>
+                        </html>
+                    `);
+                } else {
+                    // 雙頁列印
+                    const printWindow = window.open('', '_blank');
+                    const page1Data = canvases[0].toDataURL('image/png');
+                    const page2Data = canvases[1].toDataURL('image/png');
+                    
+                    printWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>列印圖片（雙頁）</title>
+                            <style>
+                                @media print {
+                                    @page {
+                                        size: A4 portrait;
+                                        margin: 0;
+                                    }
+                                    body {
+                                        margin: 0;
+                                        padding: 0;
+                                    }
+                                    .page {
+                                        width: 100%;
+                                        height: 100vh;
+                                        page-break-after: always;
+                                        display: flex;
+                                        justify-content: center;
+                                        align-items: center;
+                                    }
+                                    .page:last-child {
+                                        page-break-after: avoid;
+                                    }
+                                    img {
+                                        width: 100%;
+                                        height: 100%;
+                                        object-fit: contain;
+                                    }
+                                }
+                                body {
+                                    margin: 0;
+                                    font-family: Arial, sans-serif;
+                                }
+                                .page {
+                                    display: flex;
+                                    justify-content: center;
+                                    align-items: center;
+                                    min-height: 100vh;
+                                    margin-bottom: 20px;
+                                }
+                                .page h3 {
+                                    position: absolute;
+                                    top: 10px;
+                                    color: #666;
+                                }
+                                img {
+                                    max-width: 100%;
+                                    max-height: 90vh;
+                                    border: 1px solid #ddd;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="page">
+                                <h3>第1頁</h3>
+                                <img src="${page1Data}">
+                            </div>
+                            <div class="page">
+                                <h3>第2頁</h3>
+                                <img src="${page2Data}" onload="setTimeout(() => window.print(), 500);">
+                            </div>
+                        </body>
+                        </html>
+                    `);
+                }
+                
+                printWindow.document.close();
+                showStatus('列印視窗已開啟！', 'success');
+            } catch (error) {
+                console.error('準備列印失敗:', error);
+                showStatus('準備列印失敗，請重試', 'error');
+            }
+        });
+
+        // 初始化
+        updateLayoutSelection();
+        updateUI();
+    </script>
+</body>
+</html>

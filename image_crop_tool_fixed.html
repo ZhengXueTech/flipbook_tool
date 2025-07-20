@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圖片裁切工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-special {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            font-weight: bold;
+        }
+
+        .btn-special:hover {
+            background: linear-gradient(135deg, #ee5a24 0%, #ff6b6b 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            padding: 30px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .image-container {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .image-item {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .image-item:hover {
+            border-color: #007bff;
+            transform: scale(1.02);
+        }
+
+        .image-item.active {
+            border-color: #007bff;
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-info {
+            padding: 10px;
+            background: #f8f9fa;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        #imageCanvas {
+            display: block;
+            max-width: 100%;
+            cursor: crosshair;
+        }
+
+        .selection-box {
+            position: absolute;
+            border: 2px dashed #007bff;
+            background: rgba(0, 123, 255, 0.1);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .preview-container {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .preview-title {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #495057;
+            text-align: center;
+        }
+
+        .preview-grid {
+            display: grid;
+            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+
+        .preview-item {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .preview-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .preview-item canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .preview-info {
+            padding: 10px;
+            background: #f8f9fa;
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+        }
+
+        .info-panel {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .info-panel h3 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ 圖片裁切工具</h1>
+            <p>支援手動選擇區域與自動平均分割功能</p>
+        </div>
+
+        <div class="controls">
+            <div class="upload-area" id="uploadArea">
+                <p style="font-size: 18px; margin-bottom: 10px;">📁 點擊或拖拽圖片到此處</p>
+                <p style="color: #6c757d;">支援 JPG, PNG, GIF 格式 | 可同時選擇多張圖片</p>
+                <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="clearSelection()">清除選擇</button>
+                <button class="btn btn-secondary" onclick="splitAllImages()">批量水平分割</button>
+                <button class="btn btn-secondary" onclick="cropAllByRatio()">批量10:8.5裁切</button>
+                <button class="btn btn-secondary" onclick="cropAllSquare()">批量8.5:8.5裁切</button>
+                <button class="btn btn-success" onclick="cropSelected()">裁切選中區域</button>
+                <button class="btn btn-primary" onclick="downloadAll()">下載全部</button>
+            </div>
+            
+            <div class="button-group" style="margin-top: 15px;">
+                <button class="btn btn-special" onclick="createAnimationCards()">🎬 動畫車6張版</button>
+                <button class="btn btn-special" onclick="createAnimationCardsWithBorder()">🎬 動畫車6張版(白邊)</button>
+                <button class="btn btn-warning" onclick="clearPreviewResults()">🗑️ 清除預覽結果</button>
+                <button class="btn btn-danger" onclick="clearStoredImages()">🔄 清除暫存圖片</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="image-container">
+                <div id="imageGallery" class="image-gallery" style="display: none;"></div>
+                
+                <div class="canvas-wrapper">
+                    <canvas id="imageCanvas"></canvas>
+                    <div class="selection-box" id="selectionBox" style="display: none;"></div>
+                </div>
+                
+                <div class="info-panel">
+                    <h3>操作說明</h3>
+                    <p>• 可同時上傳多張圖片，點擊圖片切換編輯</p>
+                    <p>• 拖拽滑鼠選擇要裁切的區域</p>
+                    <p>• 使用「批量水平分割」處理所有圖片</p>
+                    <p>• 使用「批量10:8.5裁切」按照 A4 紙張比例處理所有圖片</p>
+                    <p>• 使用「批量8.5:8.5裁切」按照正方形比例處理所有圖片</p>
+                    <p>• 🎬 <strong>動畫車6張版</strong> - 自動進行正方形裁切→水平分割→循環組合</p>
+                    <p>• 🎬 <strong>動畫車6張版(白邊)</strong> - 同上功能，但在上下組合間加入白邊分隔</p>
+                    <p>• 裁切後的圖片會顯示在右側預覽區</p>
+                    <p>• 點擊「下載全部」可以批量下載所有裁切結果</p>
+                    <p style="border-top: 1px solid #dee2e6; padding-top: 10px; margin-top: 10px;">
+                        <strong>清理功能：</strong><br>
+                        • 🗑️ 清除預覽結果 - 只清除右側的裁切結果<br>
+                        • 🔄 清除暫存圖片 - 清除所有上傳的原始圖片
+                    </p>
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <h2 class="preview-title">🔍 預覽結果</h2>
+                <div class="preview-grid" id="previewGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let canvas, ctx, img;
+        let isSelecting = false;
+        let startX, startY, endX, endY;
+        let croppedImages = [];
+        let uploadedImages = [];
+        let currentImageIndex = 0;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            canvas = document.getElementById('imageCanvas');
+            ctx = canvas.getContext('2d');
+            
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadArea = document.getElementById('uploadArea');
+
+            // 文件上傳
+            fileInput.addEventListener('change', handleFileSelect);
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            // 拖拽功能
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+
+            // 滑鼠選擇功能
+            canvas.addEventListener('mousedown', startSelection);
+            canvas.addEventListener('mousemove', updateSelection);
+            canvas.addEventListener('mouseup', endSelection);
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                loadMultipleImages(files);
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            if (files.length > 0) {
+                loadMultipleImages(files);
+            }
+        }
+
+        function loadMultipleImages(files) {
+            uploadedImages = [];
+            const imageGallery = document.getElementById('imageGallery');
+            imageGallery.innerHTML = '';
+            
+            // 初始化數組，保持正確的順序
+            uploadedImages = new Array(files.length);
+            let loadedCount = 0;
+            
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        // 直接將圖片放入對應的索引位置
+                        uploadedImages[index] = {
+                            img: img,
+                            file: file,
+                            name: file.name
+                        };
+                        
+                        // 創建縮圖，傳入正確的索引
+                        createThumbnail(img, file.name, index);
+                        
+                        loadedCount++;
+                        if (loadedCount === files.length) {
+                            // 所有圖片載入完成，按順序重新排列縮圖
+                            reorganizeThumbnails();
+                            currentImageIndex = 0;
+                            displayImage(0);
+                            imageGallery.style.display = 'grid';
+                            showStatus(`成功載入 ${files.length} 張圖片！`, 'success');
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function reorganizeThumbnails() {
+            const imageGallery = document.getElementById('imageGallery');
+            const thumbnails = Array.from(imageGallery.children);
+            
+            // 清空畫廊
+            imageGallery.innerHTML = '';
+            
+            // 按照 uploadedImages 的順序重新添加縮圖
+            uploadedImages.forEach((imageData, index) => {
+                // 找到對應的縮圖元素
+                const thumbnail = thumbnails.find(thumb => {
+                    const imgElement = thumb.querySelector('img');
+                    return imgElement && imgElement.src === imageData.img.src;
+                });
+                
+                if (thumbnail) {
+                    // 移除舊的點擊事件監聽器並重新添加
+                    const newThumbnail = thumbnail.cloneNode(true);
+                    newThumbnail.className = 'image-item';
+                    if (index === 0) newThumbnail.classList.add('active');
+                    
+                    newThumbnail.addEventListener('click', () => {
+                        // 移除其他active狀態
+                        document.querySelectorAll('.image-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        newThumbnail.classList.add('active');
+                        
+                        currentImageIndex = index;
+                        displayImage(index);
+                    });
+                    
+                    imageGallery.appendChild(newThumbnail);
+                }
+            });
+        }
+
+        function createThumbnail(img, name, index) {
+            const imageGallery = document.getElementById('imageGallery');
+            const imageItem = document.createElement('div');
+            imageItem.className = 'image-item';
+            imageItem.setAttribute('data-index', index); // 添加索引標記
+            
+            const thumbnailImg = document.createElement('img');
+            thumbnailImg.src = img.src;
+            thumbnailImg.alt = name;
+            
+            const imageInfo = document.createElement('div');
+            imageInfo.className = 'image-info';
+            imageInfo.textContent = `${index + 1}. ${name} (${img.width}×${img.height})`;
+            
+            imageItem.appendChild(thumbnailImg);
+            imageItem.appendChild(imageInfo);
+            
+            // 暫時添加到畫廊（稍後會重新排序）
+            imageGallery.appendChild(imageItem);
+        }
+
+        function displayImage(index) {
+            if (!uploadedImages[index]) return;
+            
+            img = uploadedImages[index].img;
+            
+            // 設置 canvas 大小
+            const maxWidth = 600;
+            const maxHeight = 400;
+            let { width, height } = img;
+
+            // 按比例縮放
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width *= ratio;
+                height *= ratio;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            
+            // 繪製圖片
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            clearSelection();
+        }
+
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img = new Image();
+                img.onload = function() {
+                    // 設置 canvas 大小
+                    const maxWidth = 600;
+                    const maxHeight = 400;
+                    let { width, height } = img;
+
+                    // 按比例縮放
+                    if (width > maxWidth || height > maxHeight) {
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        width *= ratio;
+                        height *= ratio;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // 繪製圖片
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    showStatus('圖片載入成功！可以開始裁切了', 'success');
+                    clearPreviews();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function startSelection(e) {
+            if (!img) return;
+            
+            isSelecting = true;
+            const rect = canvas.getBoundingClientRect();
+            startX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            startY = (e.clientY - rect.top) * (canvas.height / rect.height);
+            
+            document.getElementById('selectionBox').style.display = 'block';
+        }
+
+        function updateSelection(e) {
+            if (!isSelecting || !img) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            endX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            endY = (e.clientY - rect.top) * (canvas.height / rect.height);
+            
+            updateSelectionBox();
+        }
+
+        function endSelection(e) {
+            if (!isSelecting) return;
+            isSelecting = false;
+        }
+
+        function updateSelectionBox() {
+            const selectionBox = document.getElementById('selectionBox');
+            const rect = canvas.getBoundingClientRect();
+            
+            const x = Math.min(startX, endX) * (rect.width / canvas.width);
+            const y = Math.min(startY, endY) * (rect.height / canvas.height);
+            const width = Math.abs(endX - startX) * (rect.width / canvas.width);
+            const height = Math.abs(endY - startY) * (rect.height / canvas.height);
+            
+            selectionBox.style.left = x + 'px';
+            selectionBox.style.top = y + 'px';
+            selectionBox.style.width = width + 'px';
+            selectionBox.style.height = height + 'px';
+        }
+
+        function clearSelection() {
+            // 清除選擇框
+            document.getElementById('selectionBox').style.display = 'none';
+            isSelecting = false;
+            
+            // 重置選擇座標
+            startX = startY = endX = endY = null;
+            
+            // 如果有圖片，重新繪製乾淨的圖片（移除任何選擇痕跡）
+            if (img && canvas) {
+                const maxWidth = 600;
+                const maxHeight = 400;
+                let { width, height } = img;
+
+                // 按比例縮放
+                if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(maxWidth / width, maxHeight / height);
+                    width *= ratio;
+                    height *= ratio;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, width, height);
+            }
+            
+            showStatus('已清除選擇區域', 'success');
+        }
+
+        function cropSelected() {
+            if (!img || !startX || !startY || !endX || !endY) {
+                showStatus('請先選擇要裁切的區域', 'error');
+                return;
+            }
+
+            const x = Math.min(startX, endX);
+            const y = Math.min(startY, endY);
+            const width = Math.abs(endX - startX);
+            const height = Math.abs(endY - startY);
+
+            if (width < 10 || height < 10) {
+                showStatus('選擇區域太小，請重新選擇', 'error');
+                return;
+            }
+
+            const croppedCanvas = document.createElement('canvas');
+            const croppedCtx = croppedCanvas.getContext('2d');
+            
+            croppedCanvas.width = width;
+            croppedCanvas.height = height;
+            
+            // 計算原始圖片的縮放比例
+            const scaleX = img.width / canvas.width;
+            const scaleY = img.height / canvas.height;
+            
+            croppedCtx.drawImage(
+                img,
+                x * scaleX, y * scaleY,
+                width * scaleX, height * scaleY,
+                0, 0,
+                width, height
+            );
+
+            addToPreview(croppedCanvas, `手動裁切 ${width}×${height}`);
+            clearSelection();
+            showStatus('裁切完成！', 'success');
+        }
+
+        function splitAllImages() {
+            if (uploadedImages.length === 0) {
+                showStatus('請先上傳圖片', 'error');
+                return;
+            }
+            
+            uploadedImages.forEach((imageData, index) => {
+                const img = imageData.img;
+                const halfHeight = img.height / 2;
+                
+                // 上半部分
+                const topCanvas = document.createElement('canvas');
+                const topCtx = topCanvas.getContext('2d');
+                topCanvas.width = img.width;
+                topCanvas.height = halfHeight;
+                
+                topCtx.drawImage(
+                    img,
+                    0, 0,
+                    img.width, halfHeight,
+                    0, 0,
+                    img.width, halfHeight
+                );
+
+                // 下半部分
+                const bottomCanvas = document.createElement('canvas');
+                const bottomCtx = bottomCanvas.getContext('2d');
+                bottomCanvas.width = img.width;
+                bottomCanvas.height = halfHeight;
+                
+                bottomCtx.drawImage(
+                    img,
+                    0, halfHeight,
+                    img.width, halfHeight,
+                    0, 0,
+                    img.width, halfHeight
+                );
+
+                addToPreview(topCanvas, `${imageData.name}_上半部分`);
+                addToPreview(bottomCanvas, `${imageData.name}_下半部分`);
+            });
+            
+            showStatus(`批量水平分割完成！處理了 ${uploadedImages.length} 張圖片`, 'success');
+        }
+
+        function cropAllByRatio() {
+            if (uploadedImages.length === 0) {
+                showStatus('請先上傳圖片', 'error');
+                return;
+            }
+            
+            const targetRatio = 10 / 8.5;
+            
+            uploadedImages.forEach((imageData, index) => {
+                const img = imageData.img;
+                const currentRatio = img.width / img.height;
+                
+                let cropWidth, cropHeight, cropX, cropY;
+                
+                if (currentRatio > targetRatio) {
+                    // 圖片太寬，需要裁切寬度
+                    cropHeight = img.height;
+                    cropWidth = cropHeight * targetRatio;
+                    cropX = (img.width - cropWidth) / 2;
+                    cropY = 0;
+                } else {
+                    // 圖片太高，需要裁切高度
+                    cropWidth = img.width;
+                    cropHeight = cropWidth / targetRatio;
+                    cropX = 0;
+                    cropY = (img.height - cropHeight) / 2;
+                }
+                
+                const croppedCanvas = document.createElement('canvas');
+                const croppedCtx = croppedCanvas.getContext('2d');
+                
+                croppedCanvas.width = cropWidth;
+                croppedCanvas.height = cropHeight;
+                
+                croppedCtx.drawImage(
+                    img,
+                    cropX, cropY,
+                    cropWidth, cropHeight,
+                    0, 0,
+                    cropWidth, cropHeight
+                );
+
+                addToPreview(croppedCanvas, `${imageData.name}_10比8.5`);
+            });
+            
+            showStatus(`批量10:8.5裁切完成！處理了 ${uploadedImages.length} 張圖片`, 'success');
+        }
+
+        function cropAllSquare() {
+            if (uploadedImages.length === 0) {
+                showStatus('請先上傳圖片', 'error');
+                return;
+            }
+            
+            // 8.5:8.5 = 1:1 正方形比例
+            const targetRatio = 1;
+            
+            uploadedImages.forEach((imageData, index) => {
+                const img = imageData.img;
+                const currentRatio = img.width / img.height;
+                
+                let cropSize, cropX, cropY;
+                
+                if (currentRatio > targetRatio) {
+                    // 圖片太寬，以高度為準
+                    cropSize = img.height;
+                    cropX = (img.width - cropSize) / 2;
+                    cropY = 0;
+                } else {
+                    // 圖片太高，以寬度為準
+                    cropSize = img.width;
+                    cropX = 0;
+                    cropY = (img.height - cropSize) / 2;
+                }
+                
+                const croppedCanvas = document.createElement('canvas');
+                const croppedCtx = croppedCanvas.getContext('2d');
+                
+                croppedCanvas.width = cropSize;
+                croppedCanvas.height = cropSize;
+                
+                croppedCtx.drawImage(
+                    img,
+                    cropX, cropY,
+                    cropSize, cropSize,
+                    0, 0,
+                    cropSize, cropSize
+                );
+
+                addToPreview(croppedCanvas, `${imageData.name}_正方形`);
+            });
+            
+            showStatus(`批量8.5:8.5裁切完成！處理了 ${uploadedImages.length} 張圖片`, 'success');
+        }
+
+        function clearPreviewResults() {
+            // 只清除預覽結果，保留暫存的原始圖片
+            document.getElementById('previewGrid').innerHTML = '';
+            croppedImages = [];
+            showStatus('✅ 已清除所有預覽結果', 'success');
+        }
+
+        function createAnimationCards() {
+            if (uploadedImages.length === 0) {
+                showStatus('請先上傳圖片', 'error');
+                return;
+            }
+
+            showStatus('🎬 開始製作動畫車6張版...', 'success');
+
+            // 步驟1：先進行8.5:8.5正方形裁切
+            const squareImages = [];
+            uploadedImages.forEach((imageData) => {
+                const img = imageData.img;
+                const targetRatio = 1; // 正方形比例
+                const currentRatio = img.width / img.height;
+                
+                let cropSize, cropX, cropY;
+                
+                if (currentRatio > targetRatio) {
+                    cropSize = img.height;
+                    cropX = (img.width - cropSize) / 2;
+                    cropY = 0;
+                } else {
+                    cropSize = img.width;
+                    cropX = 0;
+                    cropY = (img.height - cropSize) / 2;
+                }
+                
+                const squareCanvas = document.createElement('canvas');
+                const squareCtx = squareCanvas.getContext('2d');
+                squareCanvas.width = cropSize;
+                squareCanvas.height = cropSize;
+                
+                squareCtx.drawImage(
+                    img,
+                    cropX, cropY,
+                    cropSize, cropSize,
+                    0, 0,
+                    cropSize, cropSize
+                );
+                
+                squareImages.push({
+                    canvas: squareCanvas,
+                    name: imageData.name
+                });
+            });
+
+            // 步驟2：對每張正方形圖片進行水平分割
+            const splitParts = [];
+            squareImages.forEach((squareData) => {
+                const canvas = squareData.canvas;
+                const halfHeight = canvas.height / 2;
+                
+                // 上半部分
+                const topCanvas = document.createElement('canvas');
+                const topCtx = topCanvas.getContext('2d');
+                topCanvas.width = canvas.width;
+                topCanvas.height = halfHeight;
+                topCtx.drawImage(canvas, 0, 0, canvas.width, halfHeight, 0, 0, canvas.width, halfHeight);
+                
+                // 下半部分
+                const bottomCanvas = document.createElement('canvas');
+                const bottomCtx = bottomCanvas.getContext('2d');
+                bottomCanvas.width = canvas.width;
+                bottomCanvas.height = halfHeight;
+                bottomCtx.drawImage(canvas, 0, halfHeight, canvas.width, halfHeight, 0, 0, canvas.width, halfHeight);
+                
+                splitParts.push({
+                    top: topCanvas,
+                    bottom: bottomCanvas,
+                    name: squareData.name
+                });
+            });
+
+            // 步驟3：循環組合 - 第i張的上 + 第(i+1)張的下
+            for (let i = 0; i < splitParts.length; i++) {
+                const currentPart = splitParts[i];
+                const nextIndex = (i + 1) % splitParts.length; // 循環到第一張
+                const nextPart = splitParts[nextIndex];
+                
+                // 創建組合圖片
+                const combinedCanvas = document.createElement('canvas');
+                const combinedCtx = combinedCanvas.getContext('2d');
+                
+                const width = currentPart.top.width;
+                const halfHeight = currentPart.top.height;
+                
+                combinedCanvas.width = width;
+                combinedCanvas.height = halfHeight * 2;
+                
+                // 繪製上半部分（當前圖片的上半部）
+                combinedCtx.drawImage(currentPart.top, 0, 0);
+                
+                // 繪製下半部分（下一張圖片的下半部）
+                combinedCtx.drawImage(nextPart.bottom, 0, halfHeight);
+                
+                // 添加到預覽
+                const combinedName = `動畫車_${currentPart.name.split('.')[0]}_${nextPart.name.split('.')[0]}`;
+                addToPreview(combinedCanvas, combinedName);
+            }
+
+            showStatus(`🎬 動畫車6張版製作完成！生成了 ${splitParts.length} 張組合圖片`, 'success');
+        }
+
+        // 新增：動畫車6張版(白邊)功能
+        function createAnimationCardsWithBorder() {
+            if (uploadedImages.length === 0) {
+                showStatus('請先上傳圖片', 'error');
+                return;
+            }
+
+            showStatus('🎬 開始製作動畫車6張版(白邊)...', 'success');
+
+            // 步驟1：先進行8.5:8.5正方形裁切
+            const squareImages = [];
+            uploadedImages.forEach((imageData) => {
+                const img = imageData.img;
+                const targetRatio = 1; // 正方形比例
+                const currentRatio = img.width / img.height;
+                
+                let cropSize, cropX, cropY;
+                
+                if (currentRatio > targetRatio) {
+                    cropSize = img.height;
+                    cropX = (img.width - cropSize) / 2;
+                    cropY = 0;
+                } else {
+                    cropSize = img.width;
+                    cropX = 0;
+                    cropY = (img.height - cropSize) / 2;
+                }
+                
+                const squareCanvas = document.createElement('canvas');
+                const squareCtx = squareCanvas.getContext('2d');
+                squareCanvas.width = cropSize;
+                squareCanvas.height = cropSize;
+                
+                squareCtx.drawImage(
+                    img,
+                    cropX, cropY,
+                    cropSize, cropSize,
+                    0, 0,
+                    cropSize, cropSize
+                );
+                
+                squareImages.push({
+                    canvas: squareCanvas,
+                    name: imageData.name
+                });
+            });
+
+            // 步驟2：對每張正方形圖片進行水平分割
+            const splitParts = [];
+            squareImages.forEach((squareData) => {
+                const canvas = squareData.canvas;
+                const halfHeight = canvas.height / 2;
+                
+                // 上半部分
+                const topCanvas = document.createElement('canvas');
+                const topCtx = topCanvas.getContext('2d');
+                topCanvas.width = canvas.width;
+                topCanvas.height = halfHeight;
+                topCtx.drawImage(canvas, 0, 0, canvas.width, halfHeight, 0, 0, canvas.width, halfHeight);
+                
+                // 下半部分
+                const bottomCanvas = document.createElement('canvas');
+                const bottomCtx = bottomCanvas.getContext('2d');
+                bottomCanvas.width = canvas.width;
+                bottomCanvas.height = halfHeight;
+                bottomCtx.drawImage(canvas, 0, halfHeight, canvas.width, halfHeight, 0, 0, canvas.width, halfHeight);
+                
+                splitParts.push({
+                    top: topCanvas,
+                    bottom: bottomCanvas,
+                    name: squareData.name
+                });
+            });
+
+            // 步驟3：循環組合 - 第i張的上 + 第(i+1)張的下，並加入白邊
+            const borderHeight = 20; // 白邊高度（可調整）
+            
+            for (let i = 0; i < splitParts.length; i++) {
+                const currentPart = splitParts[i];
+                const nextIndex = (i + 1) % splitParts.length; // 循環到第一張
+                const nextPart = splitParts[nextIndex];
+                
+                // 創建組合圖片（包含白邊）
+                const combinedCanvas = document.createElement('canvas');
+                const combinedCtx = combinedCanvas.getContext('2d');
+                
+                const width = currentPart.top.width;
+                const halfHeight = currentPart.top.height;
+                
+                combinedCanvas.width = width;
+                combinedCanvas.height = halfHeight * 2 + borderHeight; // 加入白邊高度
+                
+                // 填充白色背景
+                combinedCtx.fillStyle = '#FFFFFF';
+                combinedCtx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
+                
+                // 繪製上半部分（當前圖片的上半部）
+                combinedCtx.drawImage(currentPart.top, 0, 0);
+                
+                // 中間留白（白邊區域）
+                // 繪製下半部分（下一張圖片的下半部）
+                combinedCtx.drawImage(nextPart.bottom, 0, halfHeight + borderHeight);
+                
+                // 添加到預覽
+                const combinedName = `動畫車白邊_${currentPart.name.split('.')[0]}_${nextPart.name.split('.')[0]}`;
+                addToPreview(combinedCanvas, combinedName);
+            }
+
+            showStatus(`🎬 動畫車6張版(白邊)製作完成！生成了 ${splitParts.length} 張組合圖片`, 'success');
+        }
+
+        function clearStoredImages() {
+            // 清除所有暫存圖片和相關資料
+            document.getElementById('imageGallery').style.display = 'none';
+            document.getElementById('imageGallery').innerHTML = '';
+            uploadedImages = [];
+            currentImageIndex = 0;
+            
+            // 清空畫布
+            if (canvas) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = 0;
+                canvas.height = 0;
+            }
+            
+            // 重置變數
+            img = null;
+            clearSelection();
+            
+            // 重置檔案輸入
+            document.getElementById('fileInput').value = '';
+            
+            showStatus('🔄 已清除所有暫存圖片', 'success');
+        }
+
+        function splitImageHorizontally() {
+            if (!img) {
+                showStatus('請先上傳圖片', 'error');
+                return;
+            }
+
+            const halfHeight = canvas.height / 2;
+            
+            // 上半部分
+            const topCanvas = document.createElement('canvas');
+            const topCtx = topCanvas.getContext('2d');
+            topCanvas.width = canvas.width;
+            topCanvas.height = halfHeight;
+            
+            const scaleX = img.width / canvas.width;
+            const scaleY = img.height / canvas.height;
+            
+            topCtx.drawImage(
+                img,
+                0, 0,
+                img.width, img.height / 2,
+                0, 0,
+                canvas.width, halfHeight
+            );
+
+            // 下半部分
+            const bottomCanvas = document.createElement('canvas');
+            const bottomCtx = bottomCanvas.getContext('2d');
+            bottomCanvas.width = canvas.width;
+            bottomCanvas.height = halfHeight;
+            
+            bottomCtx.drawImage(
+                img,
+                0, img.height / 2,
+                img.width, img.height / 2,
+                0, 0,
+                canvas.width, halfHeight
+            );
+
+            addToPreview(topCanvas, `上半部分 ${canvas.width}×${Math.floor(halfHeight)}`);
+            addToPreview(bottomCanvas, `下半部分 ${canvas.width}×${Math.floor(halfHeight)}`);
+            
+            showStatus('水平分割完成！', 'success');
+        }
+
+        function cropByRatio() {
+            if (!img) {
+                showStatus('請先上傳圖片', 'error');
+                return;
+            }
+
+            // 10:8.5 比例
+            const targetRatio = 10 / 8.5;
+            const currentRatio = canvas.width / canvas.height;
+            
+            let cropWidth, cropHeight, cropX, cropY;
+            
+            if (currentRatio > targetRatio) {
+                // 圖片太寬，需要裁切寬度
+                cropHeight = canvas.height;
+                cropWidth = cropHeight * targetRatio;
+                cropX = (canvas.width - cropWidth) / 2;
+                cropY = 0;
+            } else {
+                // 圖片太高，需要裁切高度
+                cropWidth = canvas.width;
+                cropHeight = cropWidth / targetRatio;
+                cropX = 0;
+                cropY = (canvas.height - cropHeight) / 2;
+            }
+            
+            const croppedCanvas = document.createElement('canvas');
+            const croppedCtx = croppedCanvas.getContext('2d');
+            
+            croppedCanvas.width = cropWidth;
+            croppedCanvas.height = cropHeight;
+            
+            // 計算原始圖片的縮放比例
+            const scaleX = img.width / canvas.width;
+            const scaleY = img.height / canvas.height;
+            
+            croppedCtx.drawImage(
+                img,
+                cropX * scaleX, cropY * scaleY,
+                cropWidth * scaleX, cropHeight * scaleY,
+                0, 0,
+                cropWidth, cropHeight
+            );
+
+            addToPreview(croppedCanvas, `10:8.5比例 ${Math.floor(cropWidth)}×${Math.floor(cropHeight)}`);
+            showStatus('10:8.5 比例裁切完成！', 'success');
+        }
+
+        function addToPreview(canvas, title) {
+            const previewGrid = document.getElementById('previewGrid');
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            
+            const previewCanvas = document.createElement('canvas');
+            const previewCtx = previewCanvas.getContext('2d');
+            
+            // 設置預覽尺寸
+            const maxPreviewSize = 150;
+            const scale = Math.min(maxPreviewSize / canvas.width, maxPreviewSize / canvas.height);
+            
+            previewCanvas.width = canvas.width * scale;
+            previewCanvas.height = canvas.height * scale;
+            
+            previewCtx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+            
+            const info = document.createElement('div');
+            info.className = 'preview-info';
+            info.textContent = title;
+            
+            previewItem.appendChild(previewCanvas);
+            previewItem.appendChild(info);
+            previewGrid.appendChild(previewItem);
+            
+            // 保存到數組中供下載使用
+            croppedImages.push({
+                canvas: canvas,
+                title: title
+            });
+        }
+
+        function clearPreviews() {
+            document.getElementById('previewGrid').innerHTML = '';
+            document.getElementById('imageGallery').style.display = 'none';
+            document.getElementById('imageGallery').innerHTML = '';
+            croppedImages = [];
+            uploadedImages = [];
+            currentImageIndex = 0;
+        }
+
+        function downloadAll() {
+            if (croppedImages.length === 0) {
+                showStatus('沒有可下載的圖片', 'error');
+                return;
+            }
+
+            croppedImages.forEach((item, index) => {
+                const link = document.createElement('a');
+                link.download = `cropped_image_${index + 1}_${item.title.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+                link.href = item.canvas.toDataURL('image/png');
+                link.click();
+            });
+
+            showStatus(`成功下載 ${croppedImages.length} 張圖片！`, 'success');
+        }
+
+        function showStatus(message, type) {
+            // 移除現有的狀態訊息
+            const existingStatus = document.querySelector('.status');
+            if (existingStatus) {
+                existingStatus.remove();
+            }
+
+            const status = document.createElement('div');
+            status.className = `status ${type}`;
+            status.textContent = message;
+            
+            document.querySelector('.controls').appendChild(status);
+            
+            // 3秒後自動消失
+            setTimeout(() => {
+                if (status.parentNode) {
+                    status.remove();
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+                

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影片畫面截取工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px dashed #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .file-input-wrapper {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .setting-group {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .setting-group input, .setting-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .setting-group input:focus, .setting-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .video-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        video {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .extract-button {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            padding: 15px;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .extract-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+
+        .extract-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .output-section {
+            margin-top: 40px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .output-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .output-item:hover {
+            transform: translateY(-4px);
+        }
+
+        .output-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .download-link {
+            display: block;
+            text-align: center;
+            padding: 8px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+
+        .download-link:hover {
+            background: #5a6fd8;
+        }
+
+        .download-all {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .download-all-button {
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .download-all-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .info-text {
+            color: #6c757d;
+            font-size: 0.9em;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 影片畫面截取工具</h1>
+        
+        <div class="upload-section">
+            <div class="file-input-wrapper">
+                <label for="videoFile" class="file-input-label">
+                    📁 選擇影片檔案
+                </label>
+                <input type="file" id="videoFile" class="file-input" accept="video/*">
+            </div>
+            <div class="info-text">支援 MP4、MOV、AVI、WebM 等常見影片格式</div>
+        </div>
+
+        <div class="settings">
+            <div class="setting-group">
+                <label for="interval">截取間隔 (秒)</label>
+                <input type="number" id="interval" value="2" min="0.1" step="0.1">
+                <div class="info-text">每隔幾秒截取一張圖片</div>
+            </div>
+            
+            <div class="setting-group">
+                <label for="quality">圖片品質</label>
+                <select id="quality">
+                    <option value="0.9">高品質 (90%)</option>
+                    <option value="0.8" selected>標準 (80%)</option>
+                    <option value="0.7">壓縮 (70%)</option>
+                    <option value="0.6">低檔案大小 (60%)</option>
+                </select>
+            </div>
+            
+            <div class="setting-group">
+                <label for="format">輸出格式</label>
+                <select id="format">
+                    <option value="image/jpeg" selected>JPEG</option>
+                    <option value="image/png">PNG</option>
+                    <option value="image/webp">WebP</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="video-container" id="videoContainer" style="display: none;">
+            <video id="videoPreview" controls></video>
+        </div>
+
+        <button id="extractButton" class="extract-button" disabled>
+            🎯 開始截取畫面
+        </button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">準備中...</div>
+        </div>
+
+        <div class="output-section" id="outputSection" style="display: none;">
+            <h3>📸 截取結果</h3>
+            <div class="download-all">
+                <button id="downloadAllButton" class="download-all-button">
+                    📥 下載全部圖片 (ZIP)
+                </button>
+            </div>
+            <div class="output-grid" id="outputGrid"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        let videoElement = null;
+        let extractedFrames = [];
+
+        // 檔案選擇處理
+        document.getElementById('videoFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const videoContainer = document.getElementById('videoContainer');
+                const videoPreview = document.getElementById('videoPreview');
+                const extractButton = document.getElementById('extractButton');
+                
+                const url = URL.createObjectURL(file);
+                videoPreview.src = url;
+                videoElement = videoPreview;
+                
+                videoContainer.style.display = 'block';
+                extractButton.disabled = false;
+                
+                // 重置輸出區域
+                document.getElementById('outputSection').style.display = 'none';
+                extractedFrames = [];
+            }
+        });
+
+        // 截取畫面功能
+        document.getElementById('extractButton').addEventListener('click', async function() {
+            if (!videoElement) return;
+            
+            const interval = parseFloat(document.getElementById('interval').value);
+            const quality = parseFloat(document.getElementById('quality').value);
+            const format = document.getElementById('format').value;
+            
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const outputSection = document.getElementById('outputSection');
+            const outputGrid = document.getElementById('outputGrid');
+            
+            // 顯示進度條
+            progressContainer.style.display = 'block';
+            this.disabled = true;
+            
+            // 清空之前的結果
+            outputGrid.innerHTML = '';
+            extractedFrames = [];
+            
+            const duration = videoElement.duration;
+            const totalFrames = Math.floor(duration / interval) + 1;
+            let currentFrame = 0;
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 等待影片載入完成
+            await new Promise(resolve => {
+                if (videoElement.readyState >= 2) {
+                    resolve();
+                } else {
+                    videoElement.addEventListener('loadeddata', resolve);
+                }
+            });
+            
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            
+            for (let time = 0; time <= duration; time += interval) {
+                try {
+                    // 設定影片時間
+                    videoElement.currentTime = time;
+                    
+                    // 等待影片跳到指定時間
+                    await new Promise(resolve => {
+                        const seekHandler = () => {
+                            videoElement.removeEventListener('seeked', seekHandler);
+                            resolve();
+                        };
+                        videoElement.addEventListener('seeked', seekHandler);
+                    });
+                    
+                    // 繪製到 canvas
+                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                    
+                    // 轉換為圖片
+                    const dataURL = canvas.toDataURL(format, quality);
+                    const timestamp = Math.floor(time * 10) / 10;
+                    
+                    extractedFrames.push({
+                        dataURL: dataURL,
+                        timestamp: timestamp,
+                        filename: `frame_${timestamp.toFixed(1)}s.${getFileExtension(format)}`
+                    });
+                    
+                    // 創建預覽
+                    createPreviewItem(dataURL, timestamp, format);
+                    
+                    // 更新進度
+                    currentFrame++;
+                    const progress = (currentFrame / totalFrames) * 100;
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = `正在截取第 ${currentFrame} / ${totalFrames} 張圖片...`;
+                    
+                } catch (error) {
+                    console.error('截取畫面時發生錯誤:', error);
+                }
+            }
+            
+            // 完成
+            progressText.textContent = `截取完成！共產生 ${extractedFrames.length} 張圖片`;
+            outputSection.style.display = 'block';
+            this.disabled = false;
+        });
+
+        function getFileExtension(mimeType) {
+            switch (mimeType) {
+                case 'image/png': return 'png';
+                case 'image/webp': return 'webp';
+                default: return 'jpg';
+            }
+        }
+
+        function createPreviewItem(dataURL, timestamp, format) {
+            const outputGrid = document.getElementById('outputGrid');
+            const item = document.createElement('div');
+            item.className = 'output-item';
+            
+            item.innerHTML = `
+                <img src="${dataURL}" alt="Frame at ${timestamp}s">
+                <a href="${dataURL}" download="frame_${timestamp.toFixed(1)}s.${getFileExtension(format)}" class="download-link">
+                    📥 下載 (${timestamp.toFixed(1)}s)
+                </a>
+            `;
+            
+            outputGrid.appendChild(item);
+        }
+
+        // 下載全部圖片為 ZIP
+        document.getElementById('downloadAllButton').addEventListener('click', async function() {
+            if (extractedFrames.length === 0) return;
+            
+            this.disabled = true;
+            this.textContent = '📦 正在打包...';
+            
+            const zip = new JSZip();
+            
+            for (const frame of extractedFrames) {
+                // 將 data URL 轉換為 blob
+                const response = await fetch(frame.dataURL);
+                const blob = await response.blob();
+                zip.file(frame.filename, blob);
+            }
+            
+            // 生成 ZIP 檔案
+            const zipBlob = await zip.generateAsync({type: 'blob'});
+            
+            // 下載
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(zipBlob);
+            link.download = `video_frames_${new Date().getTime()}.zip`;
+            link.click();
+            
+            this.disabled = false;
+            this.textContent = '📥 下載全部圖片 (ZIP)';
+        });
+    </script>
+</body>
+</html>

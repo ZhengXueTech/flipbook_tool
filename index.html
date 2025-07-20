@@ -88,6 +88,11 @@
             color: white;
         }
 
+        .nav-btn.animation {
+            background: linear-gradient(135deg, #a8e6cf 0%, #88d8c0 100%);
+            color: white;
+        }
+
         .nav-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
@@ -272,6 +277,9 @@
                 <button class="nav-btn video" onclick="showTool('video')">
                     🎬 影片快照
                 </button>
+                <button class="nav-btn animation" onclick="showTool('animation')">
+                    🎭 動畫機
+                </button>
             </nav>
         </div>
     </header>
@@ -301,6 +309,12 @@
                         <div class="feature-icon">🎬</div>
                         <h3 class="feature-title">影片快照</h3>
                         <p class="feature-desc">從影片中自動截取關鍵畫面，支援多種格式和品質設定，批量下載</p>
+                    </div>
+
+                    <div class="feature-card" onclick="showTool('animation')">
+                        <div class="feature-icon">🎭</div>
+                        <h3 class="feature-title">動畫機</h3>
+                        <p class="feature-desc">圖片動畫製作工具，創造生動有趣的動態效果，讓靜態圖片動起來</p>
                     </div>
                 </div>
 
@@ -335,6 +349,185 @@
                 正在載入影片快照工具...
             </div>
         </div>
+
+        <!-- 動畫機頁面 -->
+        <div id="animation" class="tool-page">
+            <div class="animation-intro">
+                <div style="max-width: 900px; margin: 0 auto; padding: 40px 20px; color: white;">
+                    <div style="text-align: center; margin-bottom: 50px;">
+                        <h1 style="font-size: 3em; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);">
+                            🎭 動畫機介紹
+                        </h1>
+                        <p style="font-size: 1.3em; opacity: 0.9; line-height: 1.6;">
+                            專業的圖片動畫製作工具，讓您的圖片動起來！
+                        </p>
+                    </div>
+
+                    <div style="display: grid; gap: 30px; margin-bottom: 50px;">
+                        <!-- 什麼是動畫機 -->
+                        <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px;">
+                            <h2 style="font-size: 2em; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                                <span style="font-size: 1.2em;">🤔</span> 什麼是動畫機？
+                            </h2>
+                            <p style="font-size: 1.1em; line-height: 1.8; opacity: 0.95;">
+                                動畫機是一種將多張靜態圖片組合成連續動畫的創作工具。通過快速播放一系列相關圖片，創造出流暢的動態效果，
+                                就像傳統的翻頁動畫書一樣。這種技術廣泛應用於動畫製作、教學演示、藝術創作等領域。
+                            </p>
+                        </div>
+
+                        <!-- 工作原理 -->
+                        <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px;">
+                            <h2 style="font-size: 2em; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                                <span style="font-size: 1.2em;">⚙️</span> 工作原理
+                            </h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                                <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 15px;">
+                                    <h3 style="color: #a8e6cf; margin-bottom: 10px;">📸 圖片序列</h3>
+                                    <p style="opacity: 0.9;">上傳一系列相關的靜態圖片，每張圖片代表動畫中的一個幀</p>
+                                </div>
+                                <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 15px;">
+                                    <h3 style="color: #88d8c0; margin-bottom: 10px;">⏱️ 時間控制</h3>
+                                    <p style="opacity: 0.9;">設定每張圖片的顯示時間，控制動畫的播放速度</p>
+                                </div>
+                                <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 15px;">
+                                    <h3 style="color: #7fcdcd; margin-bottom: 10px;">🔄 連續播放</h3>
+                                    <p style="opacity: 0.9;">按順序快速切換圖片，形成流暢的動畫效果</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 應用場景 -->
+                        <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px;">
+                            <h2 style="font-size: 2em; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                                <span style="font-size: 1.2em;">🎯</span> 應用場景
+                            </h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div style="text-align: center; padding: 20px;">
+                                    <div style="font-size: 3em; margin-bottom: 10px;">🎨</div>
+                                    <h4 style="margin-bottom: 8px;">藝術創作</h4>
+                                    <p style="font-size: 0.9em; opacity: 0.8;">手繪動畫、概念圖展示</p>
+                                </div>
+                                <div style="text-align: center; padding: 20px;">
+                                    <div style="font-size: 3em; margin-bottom: 10px;">📚</div>
+                                    <h4 style="margin-bottom: 8px;">教學演示</h4>
+                                    <p style="font-size: 0.9em; opacity: 0.8;">步驟說明、過程展示</p>
+                                </div>
+                                <div style="text-align: center; padding: 20px;">
+                                    <div style="font-size: 3em; margin-bottom: 10px;">📱</div>
+                                    <h4 style="margin-bottom: 8px;">社群媒體</h4>
+                                    <p style="font-size: 0.9em; opacity: 0.8;">GIF動圖、短片製作</p>
+                                </div>
+                                <div style="text-align: center; padding: 20px;">
+                                    <div style="font-size: 3em; margin-bottom: 10px;">🎮</div>
+                                    <h4 style="margin-bottom: 8px;">遊戲開發</h4>
+                                    <p style="font-size: 0.9em; opacity: 0.8;">角色動畫、UI動效</p>
+                                </div>
+                                <div style="text-align: center; padding: 20px;">
+                                    <div style="font-size: 3em; margin-bottom: 10px;">💼</div>
+                                    <h4 style="margin-bottom: 8px;">商業展示</h4>
+                                    <p style="font-size: 0.9em; opacity: 0.8;">產品演示、廣告動畫</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 使用技巧 -->
+                        <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px;">
+                            <h2 style="font-size: 2em; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                                <span style="font-size: 1.2em;">💡</span> 使用技巧
+                            </h2>
+                            <div style="display: grid; gap: 15px;">
+                                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                                    <span style="color: #a8e6cf; font-size: 1.5em; flex-shrink: 0;">📐</span>
+                                    <div>
+                                        <h4 style="margin-bottom: 5px; color: #a8e6cf;">保持一致的尺寸</h4>
+                                        <p style="opacity: 0.9;">確保所有圖片具有相同的寬度和高度，這樣動畫才會流暢</p>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                                    <span style="color: #88d8c0; font-size: 1.5em; flex-shrink: 0;">🎭</span>
+                                    <div>
+                                        <h4 style="margin-bottom: 5px; color: #88d8c0;">適當的幀率</h4>
+                                        <p style="opacity: 0.9;">通常12-24幀/秒效果最佳，太快會模糊，太慢會卡頓</p>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                                    <span style="color: #7fcdcd; font-size: 1.5em; flex-shrink: 0;">🎨</span>
+                                    <div>
+                                        <h4 style="margin-bottom: 5px; color: #7fcdcd;">漸進式變化</h4>
+                                        <p style="opacity: 0.9;">每張圖片之間的變化要適中，變化太大會產生跳躍感</p>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                                    <span style="color: #a8e6cf; font-size: 1.5em; flex-shrink: 0;">🔄</span>
+                                    <div>
+                                        <h4 style="margin-bottom: 5px; color: #a8e6cf;">循環設計</h4>
+                                        <p style="opacity: 0.9;">讓最後一幀能自然銜接到第一幀，創造無縫循環效果</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 歷史背景 -->
+                        <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px;">
+                            <h2 style="font-size: 2em; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                                <span style="font-size: 1.2em;">📜</span> 歷史背景
+                            </h2>
+                            <div style="font-size: 1.1em; line-height: 1.8; opacity: 0.95;">
+                                <p style="margin-bottom: 15px;">
+                                    動畫機的概念可以追溯到19世紀的光學玩具，如「費納奇鏡」(Phenakistoscope) 和「祖普拉克西鏡」(Zoetrope)。
+                                    這些裝置利用視覺暫留原理，通過快速旋轉帶有連續圖像的圓盤來創造動畫效果。
+                                </p>
+                                <p style="margin-bottom: 15px;">
+                                    進入數位時代後，電腦動畫軟體讓動畫製作變得更加便利。從早期的2D手繪動畫到現代的3D電腦動畫，
+                                    動畫機的基本原理始終沒有改變：通過連續播放一系列靜態圖像來創造動態效果。
+                                </p>
+                                <p>
+                                    今天，隨著網路技術的發展，GIF動圖、網頁動畫等形式讓動畫製作變得更加普及，
+                                    每個人都可以輕鬆創作出有趣的動畫作品。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 功能按鈕 -->
+                    <div style="text-align: center; margin-top: 40px;">
+                        <div style="background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 20px; margin-bottom: 30px;">
+                            <h3 style="font-size: 1.5em; margin-bottom: 15px;">🎬 體驗動畫機功能</h3>
+                            <p style="opacity: 0.9; margin-bottom: 20px;">
+                                在修圖工具中，我們提供了「動畫車6張版」功能，
+                                可以自動將多張圖片進行組合處理，創造有趣的動畫效果！
+                            </p>
+                            <button onclick="showTool('crop')" style="
+                                padding: 15px 35px;
+                                background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+                                color: white;
+                                border: none;
+                                border-radius: 50px;
+                                font-size: 1.2em;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+                            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                🎯 前往修圖工具體驗
+                            </button>
+                        </div>
+                        
+                        <button onclick="showTool('home')" style="
+                            padding: 12px 25px;
+                            background: rgba(255, 255, 255, 0.2);
+                            color: white;
+                            border: 2px solid rgba(255, 255, 255, 0.3);
+                            border-radius: 25px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                        " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'">
+                            🏠 返回首頁
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -358,13 +551,19 @@
                 btn.classList.remove('active');
             });
             
-            // 找到對應的按鈕並添加 active 類
-            const buttons = document.querySelectorAll('.nav-btn');
-            buttons.forEach(btn => {
-                if (btn.onclick && btn.onclick.toString().includes(`'${toolName}'`)) {
-                    btn.classList.add('active');
-                }
-            });
+            // 根據工具名稱添加對應的 active 類
+            const toolButtonMap = {
+                'home': '.nav-btn.home',
+                'merger': '.nav-btn.merger',
+                'crop': '.nav-btn.crop',
+                'video': '.nav-btn.video',
+                'animation': '.nav-btn.animation'
+            };
+            
+            const activeButton = document.querySelector(toolButtonMap[toolName]);
+            if (activeButton) {
+                activeButton.classList.add('active');
+            }
 
             // 隱藏所有頁面
             document.querySelectorAll('.tool-page').forEach(page => {
@@ -373,10 +572,12 @@
 
             // 顯示選中的頁面
             const targetPage = document.getElementById(toolName);
-            targetPage.classList.add('active');
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
 
-            // 如果不是首頁且還沒載入過，則載入對應的HTML文件
-            if (toolName !== 'home' && !toolsLoaded[toolName]) {
+            // 如果不是首頁和動畫機且還沒載入過，則載入對應的HTML文件
+            if (toolName !== 'home' && toolName !== 'animation' && !toolsLoaded[toolName]) {
                 loadTool(toolName);
             }
 
@@ -386,6 +587,11 @@
         function loadTool(toolName) {
             const targetPage = document.getElementById(toolName);
             const fileName = toolFiles[toolName];
+            
+            if (!targetPage) {
+                console.error(`找不到 ID 為 ${toolName} 的頁面元素`);
+                return;
+            }
             
             if (!fileName) {
                 targetPage.innerHTML = '<div style="text-align: center; color: white; padding: 50px;">工具載入失敗</div>';
@@ -439,14 +645,14 @@
             const urlParams = new URLSearchParams(window.location.search);
             const tool = urlParams.get('tool');
             
-            if (tool && ['merger', 'crop', 'video'].includes(tool)) {
+            if (tool && ['merger', 'crop', 'video', 'animation'].includes(tool)) {
                 showTool(tool);
             }
         });
 
         // 提供給外部調用的函數，可以用於直接跳轉到指定工具
         window.navigateToTool = function(toolName) {
-            if (['home', 'merger', 'crop', 'video'].includes(toolName)) {
+            if (['home', 'merger', 'crop', 'video', 'animation'].includes(toolName)) {
                 showTool(toolName);
                 // 更新 URL 但不刷新頁面
                 const newUrl = toolName === 'home' 

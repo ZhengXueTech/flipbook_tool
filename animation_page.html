@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動畫機介紹</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .header p {
+            font-size: 1.4em;
+            opacity: 0.95;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .intro-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            animation: slideInLeft 0.8s ease-out;
+        }
+
+        .intro-section:nth-child(even) {
+            animation: slideInRight 0.8s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .intro-section h2 {
+            font-size: 2.2em;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .intro-section h2 span {
+            font-size: 1.2em;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .intro-section p {
+            font-size: 1.2em;
+            line-height: 1.8;
+            color: #34495e;
+            margin-bottom: 20px;
+        }
+
+        .work-principles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .principle-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .principle-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .principle-item h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            color: #2c3e50;
+        }
+
+        .principle-item p {
+            font-size: 1em;
+            color: #5a6c7d;
+        }
+
+        .applications {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .application-item {
+            text-align: center;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .application-item:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .application-item .icon {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .application-item h4 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #2c3e50;
+        }
+
+        .application-item p {
+            font-size: 0.95em;
+            color: #5a6c7d;
+        }
+
+        .action-section {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .action-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .action-card h3 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .action-card p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-bottom: 25px;
+            color: #34495e;
+        }
+
+        .action-btn {
+            padding: 18px 40px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255, 107, 107, 0.4);
+        }
+
+        .back-btn {
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .visual-demo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px 0;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .demo-animation {
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            color: white;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flipbook-demo {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            animation: flip 2s infinite;
+        }
+
+        .rotate-demo {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            animation: rotate 3s linear infinite;
+        }
+
+        .pulse-demo {
+            background: linear-gradient(45deg, #20bf6b, #26d0ce);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes flip {
+            0%, 50% { transform: rotateY(0deg); }
+            25% { transform: rotateY(90deg); }
+            75% { transform: rotateY(-90deg); }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .timeline {
+            position: relative;
+            margin: 40px 0;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin: 40px 0;
+            display: flex;
+            align-items: center;
+            animation: fadeInTimeline 0.8s ease-out;
+        }
+
+        .timeline-item:nth-child(odd) {
+            flex-direction: row-reverse;
+        }
+
+        @keyframes fadeInTimeline {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .timeline-content {
+            flex: 1;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin: 0 40px;
+            position: relative;
+        }
+
+        .timeline-content::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border: 10px solid transparent;
+        }
+
+        .timeline-item:nth-child(odd) .timeline-content::before {
+            left: -20px;
+            border-right-color: white;
+        }
+
+        .timeline-item:nth-child(even) .timeline-content::before {
+            right: -20px;
+            border-left-color: white;
+        }
+
+        .timeline-marker {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .timeline-content h4 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .timeline-content p {
+            color: #5a6c7d;
+            line-height: 1.6;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+            }
+
+            .header p {
+                font-size: 1.2em;
+            }
+
+            .intro-section {
+                padding: 25px;
+            }
+
+            .intro-section h2 {
+                font-size: 1.8em;
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .work-principles {
+                grid-template-columns: 1fr;
+            }
+
+            .applications {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .timeline-item {
+                flex-direction: column !important;
+            }
+            
+            .timeline::before {
+                left: 20px;
+            }
+            
+            .timeline-marker {
+                left: 20px;
+            }
+            
+            .timeline-content {
+                margin-left: 50px;
+                margin-right: 0;
+            }
+
+            .timeline-content::before {
+                left: -20px !important;
+                right: auto !important;
+                border-right-color: white !important;
+                border-left-color: transparent !important;
+            }
+
+            .visual-demo {
+                justify-content: space-around;
+            }
+
+            .demo-animation {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5em;
+            }
+        }
+
+        /* 滾動動畫 */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease-out;
+        }
+
+        .scroll-animate.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 動畫機介紹</h1>
+            <p>專業的圖片動畫製作工具，讓您的圖片動起來！</p>
+        </div>
+
+        <div class="intro-section scroll-animate">
+            <h2><span>🤔</span> 什麼是動畫機？</h2>
+            <p>
+                動畫機是一種將多張靜態圖片組合成連續動畫的創作工具。通過快速播放一系列相關圖片，創造出流暢的動態效果，
+                就像傳統的翻頁動畫書一樣。這種技術廣泛應用於動畫製作、教學演示、藝術創作等領域。
+            </p>
+            
+            <div class="visual-demo">
+                <div class="demo-animation flipbook-demo">📖</div>
+                <div class="demo-animation rotate-demo">🎬</div>
+                <div class="demo-animation pulse-demo">✨</div>
+            </div>
+        </div>
+
+        <div class="intro-section scroll-animate">
+            <h2><span>⚙️</span> 工作原理</h2>
+            <p>
+                動畫機基於人眼的<strong>視覺暫留效應</strong>工作。當一系列靜態圖像以足夠快的速度連續播放時，
+                大腦會將這些獨立的圖片解讀為連續的動作，從而產生動畫效果。
+            </p>
+            <div class="work-principles">
+                <div class="principle-item">
+                    <h3 style="color: #a8e6cf;">📸 圖片序列</h3>
+                    <p>上傳一系列相關的靜態圖片，每張圖片代表動畫中的一個幀。圖片順序決定了動畫的流暢度。</p>
+                </div>
+                <div class="principle-item">
+                    <h3 style="color: #88d8c0;">⏱️ 時間控制</h3>
+                    <p>設定每張圖片的顯示時間，控制動畫的播放速度。通常每秒12-24幀可產生流暢效果。</p>
+                </div>
+                <div class="principle-item">
+                    <h3 style="color: #7fcdcd;">🔄 連續播放</h3>
+                    <p>按順序快速切換圖片，利用視覺暫留效應形成流暢的動畫效果。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro-section scroll-animate">
+            <h2><span>🏛️</span> 歷史發展</h2>
+            <p>動畫機的概念可以追溯到19世紀，經歷了從機械裝置到數位技術的演進過程。</p>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>1832年 - 費納奇鏡</h4>
+                        <p>第一個真正的動畫機裝置，利用旋轉圓盤和觀察縫隙創造動畫效果。</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>1868年 - 翻頁書</h4>
+                        <p>簡單易懂的動畫形式，通過快速翻動書頁觀看連續圖片產生動畫。</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>1890年代 - 早期電影</h4>
+                        <p>動畫機原理發展為電影技術，開啟了動態影像的新時代。</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>現代 - 數位動畫</h4>
+                        <p>電腦技術讓動畫製作更加便利，您使用的工具就是現代動畫機的體現！</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="intro-section scroll-animate">
+            <h2><span>🎯</span> 應用場景</h2>
+            <p>動畫機技術在現代有著廣泛的應用，從藝術創作到商業展示都能發揮重要作用。</p>
+            <div class="applications">
+                <div class="application-item">
+                    <div class="icon">🎨</div>
+                    <h4>藝術創作</h4>
+                    <p>手繪動畫、概念圖展示、視覺藝術表現</p>
+                </div>
+                <div class="application-item">
+                    <div class="icon">📚</div>
+                    <h4>教學演示</h4>
+                    <p>步驟說明、過程展示、概念視覺化</p>
+                </div>
+                <div class="application-item">
+                    <div class="icon">📱</div>
+                    <h4>社群媒體</h4>
+                    <p>GIF動圖、Instagram Story、短片製作</p>
+                </div>
+                <div class="application-item">
+                    <div class="icon">🎮</div>
+                    <h4>遊戲開發</h4>
+                    <p>角色動畫、UI動效、場景過渡</p>
+                </div>
+                <div class="application-item">
+                    <div class="icon">💼</div>
+                    <h4>商業展示</h4>
+                    <p>產品演示、廣告動畫、品牌推廣</p>
+                </div>
+                <div class="application-item">
+                    <div class="icon">🔬</div>
+                    <h4>科學研究</h4>
+                    <p>實驗過程記錄、數據視覺化</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-section scroll-animate">
+            <div class="action-card">
+                <h3>🎬 體驗動畫機功能</h3>
+                <p>
+                    在我們的修圖工具中，提供了「動畫車6張版」功能，
+                    可以自動將多張圖片進行組合處理，創造有趣的動畫效果！
+                    <br><br>
+                    這個功能會自動執行：正方形裁切 → 水平分割 → 循環組合，
+                    讓您輕鬆製作出專業的動畫效果。
+                </p>
+                <button class="action-btn" onclick="goToCropTool()">
+                    🎯 前往修圖工具體驗
+                </button>
+            </div>
+            
+            <button class="back-btn" onclick="goHome()">
+                🏠 返回首頁
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 滾動動畫效果
+        function initScrollAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.scroll-animate').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        // 導航功能
+        function goToCropTool() {
+            // 檢查是否在父頁面中
+            if (window.parent && window.parent !== window) {
+                // 在iframe中，通知父頁面切換工具
+                window.parent.postMessage({ action: 'showTool', tool: 'crop' }, '*');
+            } else {
+                // 獨立頁面，嘗試導航到修圖工具
+                const cropToolUrl = 'image_crop_tool_fixed.html';
+                if (confirm('即將跳轉到修圖工具頁面')) {
+                    window.location.href = cropToolUrl;
+                }
+            }
+        }
+
+        function goHome() {
+            // 檢查是否在父頁面中
+            if (window.parent && window.parent !== window) {
+                // 在iframe中，通知父頁面回到首頁
+                window.parent.postMessage({ action: 'showTool', tool: 'home' }, '*');
+            } else {
+                // 獨立頁面，嘗試導航到首頁
+                const homeUrl = 'vueindex.html';
+                if (confirm('即將跳轉到首頁')) {
+                    window.location.href = homeUrl;
+                }
+            }
+        }
+
+        // 頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initScrollAnimations();
+            
+            // 添加一些互動效果
+            console.log('🎭 動畫機介紹頁面載入完成');
+            console.log('✨ 功能特色：');
+            console.log('  - 詳細的動畫機原理說明');
+            console.log('  - 豐富的視覺動畫效果');
+            console.log('  - 歷史發展時間軸');
+            console.log('  - 應用場景展示');
+            console.log('  - 滾動動畫交互');
+        });
+
+        // 監聽來自父頁面的消息
+        window.addEventListener('message', function(event) {
+            if (event.data.action === 'refresh') {
+                location.reload();
+            }
+        });
+
+        // 添加滑鼠懸停效果
+        document.querySelectorAll('.application-item, .principle-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // 添加鍵盤導航支援
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                goHome();
+            } else if (e.key === 'Enter' && e.ctrlKey) {
+                goToCropTool();
+            }
+        });
+
+        // 性能優化：延遲載入動畫
+        setTimeout(() => {
+            document.querySelectorAll('.demo-animation').forEach((el, index) => {
+                el.style.animationDelay = (index * 0.2) + 's';
+            });
+        }, 500);
+    </script>
+</body>
+</html>

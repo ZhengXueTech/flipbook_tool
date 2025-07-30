@@ -1,0 +1,2203 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>優化版圖片裁切工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            50% { transform: translate(-50%, -50%) rotate(180deg); }
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+
+        .controls {
+            padding: 40px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,249,250,0.9) 100%);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .upload-area:hover::before {
+            left: 100%;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.2);
+        }
+
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.15);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4.5em;
+            margin-bottom: 20px;
+            color: #667eea;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-text {
+            font-size: 1.4em;
+            color: #555;
+            margin-bottom: 10px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-subtext {
+            color: #888;
+            font-size: 1.1em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transition: all 0.4s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-special {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 17px;
+        }
+
+        .btn-special:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.5);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+
+        .main-content {
+            padding: 40px;
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .image-container {
+            flex: 1.5;
+            min-width: 350px;
+        }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+        }
+
+        .image-gallery::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .image-gallery::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .image-gallery::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .image-item {
+            border: 3px solid #dee2e6;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .image-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-item:hover::before {
+            opacity: 1;
+        }
+
+        .image-item:hover {
+            border-color: #667eea;
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .image-item.active {
+            border-color: #007bff;
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-info {
+            padding: 12px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-size: 11px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            border: 3px solid #dee2e6;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .canvas-wrapper:hover {
+            box-shadow: 0 20px 45px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+        }
+
+        #imageCanvas {
+            display: block;
+            max-width: 100%;
+            cursor: crosshair;
+            transition: filter 0.3s ease;
+        }
+
+        .selection-box {
+            position: absolute;
+            border: 3px dashed #667eea;
+            background: rgba(102, 126, 234, 0.15);
+            pointer-events: none;
+            z-index: 10;
+            animation: dashMove 1s linear infinite;
+        }
+
+        .border-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 15;
+            display: none;
+        }
+
+        .border-overlay.active {
+            display: block;
+        }
+
+        .border-crop-area {
+            position: absolute;
+            background: rgba(243, 156, 18, 0.3);
+            border: 2px solid #f39c12;
+        }
+
+        .border-crop-area.top {
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .border-crop-area.bottom {
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .border-crop-area.left {
+            top: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        .border-crop-area.right {
+            top: 0;
+            bottom: 0;
+            right: 0;
+        }
+
+        .preset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .border-crop-header {
+            transition: all 0.3s ease;
+        }
+
+        .border-crop-header:hover {
+            background: rgba(241, 196, 15, 0.1);
+            border-radius: 8px;
+            padding: 5px 10px;
+            margin: -5px -10px 10px -10px;
+        }
+
+        .border-crop-content {
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .border-crop-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+            transform: translateY(-10px);
+        }
+
+        #borderToggleIcon {
+            transition: transform 0.3s ease;
+            font-family: monospace;
+            font-size: 0.8em;
+        }
+
+        #borderToggleIcon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        @keyframes dashMove {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: 20; }
+        }
+
+        .preview-container {
+            flex: 1;
+            min-width: 350px;
+        }
+
+        .preview-title {
+            font-size: 2em;
+            margin-bottom: 25px;
+            color: #495057;
+            text-align: center;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .preview-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .preview-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            margin-bottom: 25px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            border: 2px solid #dee2e6;
+        }
+
+        .preview-grid::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .preview-grid::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 5px;
+        }
+
+        .preview-grid::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+        }
+
+        .preview-item {
+            border: 3px solid #dee2e6;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .preview-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), transparent, rgba(118, 75, 162, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .preview-item:hover::before {
+            opacity: 1;
+        }
+
+        .preview-item:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            border-color: #667eea;
+        }
+
+        .preview-item canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .preview-info {
+            padding: 12px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .info-panel {
+            background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+            padding: 30px;
+            border-radius: 20px;
+            margin-top: 25px;
+            border: 2px solid #dee2e6;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .info-panel h3 {
+            margin-bottom: 20px;
+            color: #495057;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .info-panel ul {
+            margin-left: 25px;
+            line-height: 2;
+        }
+
+        .info-panel li {
+            margin-bottom: 10px;
+            position: relative;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .info-panel li::before {
+            content: '✨';
+            position: absolute;
+            left: -20px;
+            color: #667eea;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .status {
+            text-align: center;
+            margin: 25px 0;
+            padding: 20px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 1.1em;
+            animation: statusSlide 0.5s ease-out;
+        }
+
+        @keyframes statusSlide {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .progress-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: progressShine 2s ease infinite;
+        }
+
+        @keyframes progressShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .main-content {
+                flex-direction: column;
+                padding: 20px;
+                gap: 20px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 250px;
+                padding: 12px 25px;
+            }
+
+            .header h1 {
+                font-size: 2.2em;
+            }
+
+            .header p {
+                font-size: 1.1em;
+            }
+
+            .image-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                max-height: 200px;
+            }
+
+            .preview-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                max-height: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ 智能圖片裁切工具</h1>
+            <p>專業級圖片處理，支援批量操作、動畫製作與智能裁切</p>
+        </div>
+
+        <div class="controls">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">點擊或拖拽圖片到此處</div>
+                <div class="upload-subtext">支援 JPG, PNG, GIF, WebP 格式 | 可同時選擇多張圖片</div>
+                <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
+            </div>
+
+            <div class="button-group">
+                <div class="tooltip">
+                    <button class="btn btn-primary" onclick="clearSelection()">清除選擇</button>
+                    <span class="tooltiptext">清除當前選擇區域</span>
+                </div>
+                <div class="tooltip">
+                    <button class="btn btn-secondary" onclick="splitAllImages()">批量水平分割</button>
+                    <span class="tooltiptext">將所有圖片平均分為上下兩部分</span>
+                </div>
+                <div class="tooltip">
+                    <button class="btn btn-secondary" onclick="cropAllByRatio()">批量10:8.5裁切</button>
+                    <span class="tooltiptext">按A4紙張比例裁切所有圖片</span>
+                </div>
+                <div class="tooltip">
+                    <button class="btn btn-secondary" onclick="cropAllSquare()">批量8.5:8.5裁切</button>
+                    <span class="tooltiptext">將所有圖片裁切為正方形</span>
+                </div>
+                <div class="tooltip">
+                    <button class="btn btn-success" onclick="cropSelected()">裁切選中區域</button>
+                    <span class="tooltiptext">裁切手動選擇的區域</span>
+                </div>
+                <div class="tooltip">
+                    <button class="btn btn-primary" onclick="downloadAll()">下載全部</button>
+                    <span class="tooltiptext">批量下載所有處理結果</span>
+                </div>
+            </div>
+            
+            <div class="button-group" style="margin-top: 20px;">
+                <div class="tooltip">
+                    <button class="btn btn-special" onclick="createAnimationCards()">🎬 動畫車6張版</button>
+                    <span class="tooltiptext">自動處理為動畫效果組合</span>
+                </div>
+                <div class="tooltip">
+                    <button class="btn btn-special" onclick="createAnimationCardsWithBorder()">🎬 動畫車6張版(白邊)</button>
+                    <span class="tooltiptext">帶白邊分隔的動畫效果組合</span>
+                </div>
+                <div class="tooltip">
+                    <button class="btn btn-warning" onclick="clearPreviewResults()">🗑️ 清除預覽結果</button>
+                    <span class="tooltiptext">清除右側預覽區域的所有結果</span>
+                </div>
+                <div class="tooltip">
+                    <button class="btn btn-danger" onclick="clearStoredImages()">🔄 清除暫存圖片</button>
+                    <span class="tooltiptext">清除所有已上傳的原始圖片</span>
+                </div>
+            </div>
+
+            <!-- 外框切除工具 -->
+            <div class="border-crop-section" style="margin-top: 25px; padding: 25px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-radius: 15px; border: 2px solid #f39c12;">
+                <div class="border-crop-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer;" onclick="toggleBorderCropSection()">
+                    <h3 style="color: #e67e22; margin: 0; font-size: 1.4em; display: flex; align-items: center; gap: 10px;">
+                        <span id="borderToggleIcon">▼</span>
+                        ✂️ 外框切除工具
+                    </h3>
+                    <span style="color: #e67e22; font-size: 0.9em; opacity: 0.8;">點擊收合/展開</span>
+                </div>
+                
+                <div class="border-crop-content" id="borderCropContent" style="transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden;">
+                    <div class="border-controls" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div class="control-group">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #8b4513;">上方外框 (px)</label>
+                            <input type="number" id="borderTop" value="10" min="0" max="500" style="width: 100%; padding: 10px; border: 2px solid #e67e22; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div class="control-group">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #8b4513;">下方外框 (px)</label>
+                            <input type="number" id="borderBottom" value="10" min="0" max="500" style="width: 100%; padding: 10px; border: 2px solid #e67e22; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div class="control-group">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #8b4513;">左側外框 (px)</label>
+                            <input type="number" id="borderLeft" value="10" min="0" max="500" style="width: 100%; padding: 10px; border: 2px solid #e67e22; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div class="control-group">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #8b4513;">右側外框 (px)</label>
+                            <input type="number" id="borderRight" value="10" min="0" max="500" style="width: 100%; padding: 10px; border: 2px solid #e67e22; border-radius: 8px; font-size: 14px;">
+                        </div>
+                    </div>
+                    
+                    <div class="border-presets" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+                        <button class="preset-btn" onclick="setBorderPreset(0)" style="padding: 8px 15px; background: #95a5a6; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 12px;">無外框</button>
+                        <button class="preset-btn" onclick="setBorderPreset(5)" style="padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 12px;">5px</button>
+                        <button class="preset-btn" onclick="setBorderPreset(10)" style="padding: 8px 15px; background: #2ecc71; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 12px;">10px</button>
+                        <button class="preset-btn" onclick="setBorderPreset(20)" style="padding: 8px 15px; background: #f39c12; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 12px;">20px</button>
+                        <button class="preset-btn" onclick="setBorderPreset(50)" style="padding: 8px 15px; background: #e74c3c; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 12px;">50px</button>
+                    </div>
+                    
+                    <div class="border-actions" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <div class="tooltip">
+                            <button class="btn" onclick="previewBorderCrop()" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 12px 25px;">👁️ 預覽外框切除</button>
+                            <span class="tooltiptext">預覽當前圖片的外框切除效果</span>
+                        </div>
+                        <div class="tooltip">
+                            <button class="btn" onclick="cropAllBorders()" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white; padding: 12px 25px;">✂️ 批量外框切除</button>
+                            <span class="tooltiptext">對所有圖片進行相同的外框切除</span>
+                        </div>
+                        <div class="tooltip">
+                            <button class="btn" onclick="toggleBorderPreview()" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; padding: 12px 25px;">🔍 切除範圍顯示</button>
+                            <span class="tooltiptext">在圖片上顯示將要切除的外框範圍</span>
+                        </div>
+                    </div>
+                    
+                    <div class="border-info" style="margin-top: 15px; padding: 15px; background: rgba(241, 196, 15, 0.1); border-radius: 10px; border-left: 4px solid #f1c40f;">
+                        <h4 style="color: #f39c12; margin-bottom: 8px;">💡 使用說明</h4>
+                        <ul style="margin-left: 20px; line-height: 1.6; color: #8b4513;">
+                            <li><strong>精確控制：</strong>分別設定上下左右四個方向的外框切除像素</li>
+                            <li><strong>快速預設：</strong>使用預設按鈕快速設定常用的外框大小</li>
+                            <li><strong>即時預覽：</strong>點擊預覽按鈕查看切除效果，無需實際處理</li>
+                            <li><strong>範圍顯示：</strong>在原圖上顯示切除範圍，方便確認效果</li>
+                            <li><strong>批量處理：</strong>對所有已上傳的圖片進行相同的外框切除</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">處理中...</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="image-container">
+                <div id="imageGallery" class="image-gallery" style="display: none;"></div>
+                
+                <div class="canvas-wrapper">
+                    <canvas id="imageCanvas"></canvas>
+                    <div class="selection-box" id="selectionBox" style="display: none;"></div>
+                    <div class="border-overlay" id="borderOverlay">
+                        <div class="border-crop-area top" id="borderTop"></div>
+                        <div class="border-crop-area bottom" id="borderBottom"></div>
+                        <div class="border-crop-area left" id="borderLeft"></div>
+                        <div class="border-crop-area right" id="borderRight"></div>
+                    </div>
+                </div>
+                
+                <div class="info-panel">
+                    <h3>📖 智能操作指南</h3>
+                    <ul>
+                        <li><strong>多圖上傳：</strong>同時處理多張圖片，點擊切換編輯</li>
+                        <li><strong>精準選擇：</strong>拖拽滑鼠選擇要裁切的區域</li>
+                        <li><strong>批量處理：</strong>一鍵處理所有圖片，提升工作效率</li>
+                        <li><strong>智能比例：</strong>自動適配A4紙張和正方形比例</li>
+                        <li><strong>動畫製作：</strong>創造性的動畫車功能，讓圖片動起來</li>
+                        <li><strong>外框切除：</strong>精確切除圖片邊緣，支援四方向獨立設定</li>
+                        <li><strong>無損品質：</strong>保持原始圖片品質，專業級處理</li>
+                        <li><strong>即時預覽：</strong>所有操作即時可見，所見即所得</li>
+                        <li><strong>批量下載：</strong>一鍵下載所有處理結果</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <h2 class="preview-title">🎨 處理結果預覽</h2>
+                <div class="preview-grid" id="previewGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全域變數優化
+        class ImageCropTool {
+            constructor() {
+                this.canvas = null;
+                this.ctx = null;
+                this.img = null;
+                this.isSelecting = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.endX = 0;
+                this.endY = 0;
+                this.croppedImages = [];
+                this.uploadedImages = [];
+                this.currentImageIndex = 0;
+                this.isProcessing = false;
+                this.showBorderPreview = false;
+                this.isBorderCropExpanded = true; // 預設展開狀態
+                
+                this.init();
+            }
+
+            init() {
+                this.canvas = document.getElementById('imageCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.setupEventListeners();
+                this.setupBorderEventListeners();
+                this.showStatus('工具已就緒，請上傳圖片開始處理 ✨', 'success');
+            }
+
+            setupEventListeners() {
+                const fileInput = document.getElementById('fileInput');
+                const uploadArea = document.getElementById('uploadArea');
+
+                // 文件上傳優化
+                fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+                uploadArea.addEventListener('click', () => fileInput.click());
+
+                // 拖拽功能優化
+                uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
+                uploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+                uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
+
+                // 滑鼠選擇功能優化
+                this.canvas.addEventListener('mousedown', (e) => this.startSelection(e));
+                this.canvas.addEventListener('mousemove', (e) => this.updateSelection(e));
+                this.canvas.addEventListener('mouseup', (e) => this.endSelection(e));
+                
+                // 鍵盤快捷鍵
+                document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+            }
+
+            setupBorderEventListeners() {
+                // 外框切除相關事件監聽
+                ['borderTop', 'borderBottom', 'borderLeft', 'borderRight'].forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) {
+                        input.addEventListener('input', () => {
+                            if (this.showBorderPreview) {
+                                this.updateBorderOverlay();
+                            }
+                        });
+                    }
+                });
+            }
+
+            handleKeyboard(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'v':
+                            e.preventDefault();
+                            this.handlePaste();
+                            break;
+                        case 's':
+                            e.preventDefault();
+                            this.downloadAll();
+                            break;
+                        case 'z':
+                            e.preventDefault();
+                            this.clearSelection();
+                            break;
+                    }
+                }
+                
+                if (e.key === 'Escape') {
+                    this.clearSelection();
+                }
+            }
+
+            async handlePaste() {
+                try {
+                    const items = await navigator.clipboard.read();
+                    for (const item of items) {
+                        if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+                            const blob = await item.getBlob();
+                            this.loadImageFromBlob(blob);
+                            break;
+                        }
+                    }
+                } catch (error) {
+                    this.showStatus('⚠️ 無法從剪貼簿貼上圖片', 'error');
+                }
+            }
+
+            loadImageFromBlob(blob) {
+                const file = new File([blob], 'pasted-image.png', { type: blob.type });
+                this.loadMultipleImages([file]);
+            }
+
+            handleFileSelect(e) {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) {
+                    this.loadMultipleImages(files);
+                }
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                e.currentTarget.classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.currentTarget.classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                e.currentTarget.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+                if (files.length > 0) {
+                    this.loadMultipleImages(files);
+                }
+            }
+
+            showProgress(show = false, text = '處理中...', percent = 0) {
+                const container = document.getElementById('progressContainer');
+                const fill = document.getElementById('progressFill');
+                const textEl = document.getElementById('progressText');
+                
+                if (show) {
+                    container.style.display = 'block';
+                    fill.style.width = percent + '%';
+                    textEl.textContent = text;
+                } else {
+                    container.style.display = 'none';
+                }
+            }
+
+            async loadMultipleImages(files) {
+                if (this.isProcessing) return;
+                this.isProcessing = true;
+                
+                this.uploadedImages = [];
+                const imageGallery = document.getElementById('imageGallery');
+                imageGallery.innerHTML = '';
+                
+                this.showProgress(true, '載入圖片中...', 0);
+                
+                const validFiles = files.filter(file => file.type.startsWith('image/'));
+                if (validFiles.length === 0) {
+                    this.showStatus('❌ 請選擇有效的圖片檔案', 'error');
+                    this.isProcessing = false;
+                    this.showProgress(false);
+                    return;
+                }
+                
+                this.uploadedImages = new Array(validFiles.length);
+                let loadedCount = 0;
+                
+                const loadPromises = validFiles.map((file, index) => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                this.uploadedImages[index] = {
+                                    img: img,
+                                    file: file,
+                                    name: file.name,
+                                    size: file.size,
+                                    lastModified: file.lastModified
+                                };
+                                
+                                this.createThumbnail(img, file.name, index);
+                                loadedCount++;
+                                
+                                const progress = (loadedCount / validFiles.length) * 100;
+                                this.showProgress(true, `載入圖片 ${loadedCount}/${validFiles.length}`, progress);
+                                
+                                resolve();
+                            };
+                            img.onerror = reject;
+                            img.src = e.target.result;
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                });
+
+                try {
+                    await Promise.all(loadPromises);
+                    this.reorganizeThumbnails();
+                    this.currentImageIndex = 0;
+                    this.displayImage(0);
+                    imageGallery.style.display = 'grid';
+                    this.showStatus(`✅ 成功載入 ${validFiles.length} 張圖片！`, 'success');
+                } catch (error) {
+                    this.showStatus('❌ 圖片載入失敗，請重試', 'error');
+                    console.error('Image loading error:', error);
+                } finally {
+                    this.isProcessing = false;
+                    this.showProgress(false);
+                }
+            }
+
+            reorganizeThumbnails() {
+                const imageGallery = document.getElementById('imageGallery');
+                const thumbnails = Array.from(imageGallery.children);
+                
+                imageGallery.innerHTML = '';
+                
+                this.uploadedImages.forEach((imageData, index) => {
+                    const thumbnail = thumbnails.find(thumb => {
+                        const imgElement = thumb.querySelector('img');
+                        return imgElement && imgElement.src === imageData.img.src;
+                    });
+                    
+                    if (thumbnail) {
+                        const newThumbnail = thumbnail.cloneNode(true);
+                        newThumbnail.className = 'image-item';
+                        if (index === 0) newThumbnail.classList.add('active');
+                        
+                        newThumbnail.addEventListener('click', () => {
+                            document.querySelectorAll('.image-item').forEach(item => {
+                                item.classList.remove('active');
+                            });
+                            newThumbnail.classList.add('active');
+                            
+                            this.currentImageIndex = index;
+                            this.displayImage(index);
+                        });
+                        
+                        imageGallery.appendChild(newThumbnail);
+                    }
+                });
+            }
+
+            createThumbnail(img, name, index) {
+                const imageGallery = document.getElementById('imageGallery');
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                imageItem.setAttribute('data-index', index);
+                
+                const thumbnailImg = document.createElement('img');
+                thumbnailImg.src = img.src;
+                thumbnailImg.alt = name;
+                
+                const imageInfo = document.createElement('div');
+                imageInfo.className = 'image-info';
+                const fileSizeKB = Math.round(this.uploadedImages[index]?.size / 1024) || 0;
+                imageInfo.innerHTML = `
+                    <strong>${index + 1}. ${name}</strong><br>
+                    ${img.width}×${img.height} | ${fileSizeKB}KB
+                `;
+                
+                imageItem.appendChild(thumbnailImg);
+                imageItem.appendChild(imageInfo);
+                imageGallery.appendChild(imageItem);
+            }
+
+            displayImage(index) {
+                if (!this.uploadedImages[index]) return;
+                
+                this.img = this.uploadedImages[index].img;
+                
+                const maxWidth = 700;
+                const maxHeight = 500;
+                let { width, height } = this.img;
+
+                if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(maxWidth / width, maxHeight / height);
+                    width *= ratio;
+                    height *= ratio;
+                }
+
+                this.canvas.width = width;
+                this.canvas.height = height;
+                
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.drawImage(this.img, 0, 0, width, height);
+                
+                this.clearSelection();
+                this.updateBorderOverlay(); // 更新外框預覽
+            }
+
+            startSelection(e) {
+                if (!this.img) return;
+                
+                this.isSelecting = true;
+                const rect = this.canvas.getBoundingClientRect();
+                this.startX = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                this.startY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+                
+                document.getElementById('selectionBox').style.display = 'block';
+            }
+
+            updateSelection(e) {
+                if (!this.isSelecting || !this.img) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                this.endX = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                this.endY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+                
+                this.updateSelectionBox();
+            }
+
+            endSelection(e) {
+                if (!this.isSelecting) return;
+                this.isSelecting = false;
+            }
+
+            updateSelectionBox() {
+                const selectionBox = document.getElementById('selectionBox');
+                const rect = this.canvas.getBoundingClientRect();
+                
+                const x = Math.min(this.startX, this.endX) * (rect.width / this.canvas.width);
+                const y = Math.min(this.startY, this.endY) * (rect.height / this.canvas.height);
+                const width = Math.abs(this.endX - this.startX) * (rect.width / this.canvas.width);
+                const height = Math.abs(this.endY - this.startY) * (rect.height / this.canvas.height);
+                
+                selectionBox.style.left = x + 'px';
+                selectionBox.style.top = y + 'px';
+                selectionBox.style.width = width + 'px';
+                selectionBox.style.height = height + 'px';
+            }
+
+            showStatus(message, type) {
+                const existingStatus = document.querySelector('.status');
+                if (existingStatus) {
+                    existingStatus.remove();
+                }
+
+                const status = document.createElement('div');
+                status.className = `status ${type}`;
+                status.textContent = message;
+                
+                document.querySelector('.controls').appendChild(status);
+                
+                setTimeout(() => {
+                    if (status.parentNode) {
+                        status.remove();
+                    }
+                }, 4000);
+            }
+
+            clearSelection() {
+                document.getElementById('selectionBox').style.display = 'none';
+                this.isSelecting = false;
+                this.startX = this.startY = this.endX = this.endY = null;
+                
+                if (this.img && this.canvas) {
+                    const maxWidth = 700;
+                    const maxHeight = 500;
+                    let { width, height } = this.img;
+
+                    if (width > maxWidth || height > maxHeight) {
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        width *= ratio;
+                        height *= ratio;
+                    }
+
+                    this.canvas.width = width;
+                    this.canvas.height = height;
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.drawImage(this.img, 0, 0, width, height);
+                }
+                
+                this.showStatus('✅ 已清除選擇區域', 'success');
+            }
+
+            cropSelected() {
+                if (!this.img || !this.startX || !this.startY || !this.endX || !this.endY) {
+                    this.showStatus('⚠️ 請先選擇要裁切的區域', 'error');
+                    return;
+                }
+
+                const x = Math.min(this.startX, this.endX);
+                const y = Math.min(this.startY, this.endY);
+                const width = Math.abs(this.endX - this.startX);
+                const height = Math.abs(this.endY - this.startY);
+
+                if (width < 10 || height < 10) {
+                    this.showStatus('⚠️ 選擇區域太小，請重新選擇', 'error');
+                    return;
+                }
+
+                const croppedCanvas = document.createElement('canvas');
+                const croppedCtx = croppedCanvas.getContext('2d');
+                
+                croppedCanvas.width = width;
+                croppedCanvas.height = height;
+                
+                const scaleX = this.img.width / this.canvas.width;
+                const scaleY = this.img.height / this.canvas.height;
+                
+                croppedCtx.drawImage(
+                    this.img,
+                    x * scaleX, y * scaleY,
+                    width * scaleX, height * scaleY,
+                    0, 0,
+                    width, height
+                );
+
+                this.addToPreview(croppedCanvas, `手動裁切 ${Math.round(width)}×${Math.round(height)}`);
+                this.clearSelection();
+                this.showStatus('✅ 裁切完成！', 'success');
+            }
+
+            async splitAllImages() {
+                if (this.uploadedImages.length === 0) {
+                    this.showStatus('⚠️ 請先上傳圖片', 'error');
+                    return;
+                }
+                
+                this.showProgress(true, '批量分割處理中...', 0);
+                
+                for (let i = 0; i < this.uploadedImages.length; i++) {
+                    const imageData = this.uploadedImages[i];
+                    const img = imageData.img;
+                    const halfHeight = img.height / 2;
+                    
+                    // 上半部分
+                    const topCanvas = document.createElement('canvas');
+                    const topCtx = topCanvas.getContext('2d');
+                    topCanvas.width = img.width;
+                    topCanvas.height = halfHeight;
+                    
+                    topCtx.drawImage(img, 0, 0, img.width, halfHeight, 0, 0, img.width, halfHeight);
+
+                    // 下半部分
+                    const bottomCanvas = document.createElement('canvas');
+                    const bottomCtx = bottomCanvas.getContext('2d');
+                    bottomCanvas.width = img.width;
+                    bottomCanvas.height = halfHeight;
+                    
+                    bottomCtx.drawImage(img, 0, halfHeight, img.width, halfHeight, 0, 0, img.width, halfHeight);
+
+                    this.addToPreview(topCanvas, `${imageData.name}_上半部分`);
+                    this.addToPreview(bottomCanvas, `${imageData.name}_下半部分`);
+                    
+                    const progress = ((i + 1) / this.uploadedImages.length) * 100;
+                    this.showProgress(true, `處理進度 ${i + 1}/${this.uploadedImages.length}`, progress);
+                    
+                    // 非阻塞延遲
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+                
+                this.showProgress(false);
+                this.showStatus(`✅ 批量水平分割完成！處理了 ${this.uploadedImages.length} 張圖片`, 'success');
+            }
+
+            async cropAllByRatio() {
+                if (this.uploadedImages.length === 0) {
+                    this.showStatus('⚠️ 請先上傳圖片', 'error');
+                    return;
+                }
+                
+                this.showProgress(true, '批量比例裁切中...', 0);
+                const targetRatio = 10 / 8.5;
+                
+                for (let i = 0; i < this.uploadedImages.length; i++) {
+                    const imageData = this.uploadedImages[i];
+                    const img = imageData.img;
+                    const currentRatio = img.width / img.height;
+                    
+                    let cropWidth, cropHeight, cropX, cropY;
+                    
+                    if (currentRatio > targetRatio) {
+                        cropHeight = img.height;
+                        cropWidth = cropHeight * targetRatio;
+                        cropX = (img.width - cropWidth) / 2;
+                        cropY = 0;
+                    } else {
+                        cropWidth = img.width;
+                        cropHeight = cropWidth / targetRatio;
+                        cropX = 0;
+                        cropY = (img.height - cropHeight) / 2;
+                    }
+                    
+                    const croppedCanvas = document.createElement('canvas');
+                    const croppedCtx = croppedCanvas.getContext('2d');
+                    
+                    croppedCanvas.width = cropWidth;
+                    croppedCanvas.height = cropHeight;
+                    
+                    croppedCtx.drawImage(img, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+                    this.addToPreview(croppedCanvas, `${imageData.name}_10比8.5`);
+                    
+                    const progress = ((i + 1) / this.uploadedImages.length) * 100;
+                    this.showProgress(true, `處理進度 ${i + 1}/${this.uploadedImages.length}`, progress);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+                
+                this.showProgress(false);
+                this.showStatus(`✅ 批量10:8.5裁切完成！處理了 ${this.uploadedImages.length} 張圖片`, 'success');
+            }
+
+            async cropAllSquare() {
+                if (this.uploadedImages.length === 0) {
+                    this.showStatus('⚠️ 請先上傳圖片', 'error');
+                    return;
+                }
+                
+                this.showProgress(true, '批量正方形裁切中...', 0);
+                const targetRatio = 1;
+                
+                for (let i = 0; i < this.uploadedImages.length; i++) {
+                    const imageData = this.uploadedImages[i];
+                    const img = imageData.img;
+                    const currentRatio = img.width / img.height;
+                    
+                    let cropSize, cropX, cropY;
+                    
+                    if (currentRatio > targetRatio) {
+                        cropSize = img.height;
+                        cropX = (img.width - cropSize) / 2;
+                        cropY = 0;
+                    } else {
+                        cropSize = img.width;
+                        cropX = 0;
+                        cropY = (img.height - cropSize) / 2;
+                    }
+                    
+                    const croppedCanvas = document.createElement('canvas');
+                    const croppedCtx = croppedCanvas.getContext('2d');
+                    
+                    croppedCanvas.width = cropSize;
+                    croppedCanvas.height = cropSize;
+                    
+                    croppedCtx.drawImage(img, cropX, cropY, cropSize, cropSize, 0, 0, cropSize, cropSize);
+                    this.addToPreview(croppedCanvas, `${imageData.name}_正方形`);
+                    
+                    const progress = ((i + 1) / this.uploadedImages.length) * 100;
+                    this.showProgress(true, `處理進度 ${i + 1}/${this.uploadedImages.length}`, progress);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+                
+                this.showProgress(false);
+                this.showStatus(`✅ 批量8.5:8.5裁切完成！處理了 ${this.uploadedImages.length} 張圖片`, 'success');
+            }
+
+            clearPreviewResults() {
+                document.getElementById('previewGrid').innerHTML = '';
+                this.croppedImages = [];
+                this.showStatus('✅ 已清除所有預覽結果', 'success');
+            }
+
+            async createAnimationCards() {
+                if (this.uploadedImages.length === 0) {
+                    this.showStatus('⚠️ 請先上傳圖片', 'error');
+                    return;
+                }
+
+                this.showProgress(true, '製作動畫車6張版...', 0);
+                this.showStatus('🎬 開始製作動畫車6張版...', 'success');
+
+                // 步驟1：正方形裁切
+                const squareImages = [];
+                for (let i = 0; i < this.uploadedImages.length; i++) {
+                    const imageData = this.uploadedImages[i];
+                    const img = imageData.img;
+                    const targetRatio = 1;
+                    const currentRatio = img.width / img.height;
+                    
+                    let cropSize, cropX, cropY;
+                    
+                    if (currentRatio > targetRatio) {
+                        cropSize = img.height;
+                        cropX = (img.width - cropSize) / 2;
+                        cropY = 0;
+                    } else {
+                        cropSize = img.width;
+                        cropX = 0;
+                        cropY = (img.height - cropSize) / 2;
+                    }
+                    
+                    const squareCanvas = document.createElement('canvas');
+                    const squareCtx = squareCanvas.getContext('2d');
+                    squareCanvas.width = cropSize;
+                    squareCanvas.height = cropSize;
+                    
+                    squareCtx.drawImage(img, cropX, cropY, cropSize, cropSize, 0, 0, cropSize, cropSize);
+                    
+                    squareImages.push({
+                        canvas: squareCanvas,
+                        name: imageData.name
+                    });
+                    
+                    const progress = ((i + 1) / this.uploadedImages.length) * 50;
+                    this.showProgress(true, `正方形裁切 ${i + 1}/${this.uploadedImages.length}`, progress);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                // 步驟2：水平分割
+                const splitParts = [];
+                for (let i = 0; i < squareImages.length; i++) {
+                    const squareData = squareImages[i];
+                    const canvas = squareData.canvas;
+                    const halfHeight = canvas.height / 2;
+                    
+                    const topCanvas = document.createElement('canvas');
+                    const topCtx = topCanvas.getContext('2d');
+                    topCanvas.width = canvas.width;
+                    topCanvas.height = halfHeight;
+                    topCtx.drawImage(canvas, 0, 0, canvas.width, halfHeight, 0, 0, canvas.width, halfHeight);
+                    
+                    const bottomCanvas = document.createElement('canvas');
+                    const bottomCtx = bottomCanvas.getContext('2d');
+                    bottomCanvas.width = canvas.width;
+                    bottomCanvas.height = halfHeight;
+                    bottomCtx.drawImage(canvas, 0, halfHeight, canvas.width, halfHeight, 0, 0, canvas.width, halfHeight);
+                    
+                    splitParts.push({
+                        top: topCanvas,
+                        bottom: bottomCanvas,
+                        name: squareData.name
+                    });
+                    
+                    const progress = 50 + ((i + 1) / squareImages.length) * 25;
+                    this.showProgress(true, `水平分割 ${i + 1}/${squareImages.length}`, progress);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                // 步驟3：循環組合
+                for (let i = 0; i < splitParts.length; i++) {
+                    const currentPart = splitParts[i];
+                    const nextIndex = (i + 1) % splitParts.length;
+                    const nextPart = splitParts[nextIndex];
+                    
+                    const combinedCanvas = document.createElement('canvas');
+                    const combinedCtx = combinedCanvas.getContext('2d');
+                    
+                    const width = currentPart.top.width;
+                    const halfHeight = currentPart.top.height;
+                    
+                    combinedCanvas.width = width;
+                    combinedCanvas.height = halfHeight * 2;
+                    
+                    combinedCtx.drawImage(currentPart.top, 0, 0);
+                    combinedCtx.drawImage(nextPart.bottom, 0, halfHeight);
+                    
+                    const combinedName = `動畫車_${currentPart.name.split('.')[0]}_${nextPart.name.split('.')[0]}`;
+                    this.addToPreview(combinedCanvas, combinedName);
+                    
+                    const progress = 75 + ((i + 1) / splitParts.length) * 25;
+                    this.showProgress(true, `組合製作 ${i + 1}/${splitParts.length}`, progress);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                this.showProgress(false);
+                this.showStatus(`🎬 動畫車6張版製作完成！生成了 ${splitParts.length} 張組合圖片`, 'success');
+            }
+
+            async createAnimationCardsWithBorder() {
+                if (this.uploadedImages.length === 0) {
+                    this.showStatus('⚠️ 請先上傳圖片', 'error');
+                    return;
+                }
+
+                this.showProgress(true, '製作動畫車6張版(白邊)...', 0);
+                this.showStatus('🎬 開始製作動畫車6張版(白邊)...', 'success');
+
+                const borderHeight = 20;
+                
+                // 類似上面的流程，但加入白邊
+                const squareImages = [];
+                for (let i = 0; i < this.uploadedImages.length; i++) {
+                    const imageData = this.uploadedImages[i];
+                    const img = imageData.img;
+                    const targetRatio = 1;
+                    const currentRatio = img.width / img.height;
+                    
+                    let cropSize, cropX, cropY;
+                    if (currentRatio > targetRatio) {
+                        cropSize = img.height;
+                        cropX = (img.width - cropSize) / 2;
+                        cropY = 0;
+                    } else {
+                        cropSize = img.width;
+                        cropX = 0;
+                        cropY = (img.height - cropSize) / 2;
+                    }
+                    
+                    const squareCanvas = document.createElement('canvas');
+                    const squareCtx = squareCanvas.getContext('2d');
+                    squareCanvas.width = cropSize;
+                    squareCanvas.height = cropSize;
+                    squareCtx.drawImage(img, cropX, cropY, cropSize, cropSize, 0, 0, cropSize, cropSize);
+                    
+                    squareImages.push({ canvas: squareCanvas, name: imageData.name });
+                    
+                    const progress = ((i + 1) / this.uploadedImages.length) * 40;
+                    this.showProgress(true, `正方形裁切 ${i + 1}/${this.uploadedImages.length}`, progress);
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                const splitParts = [];
+                for (let i = 0; i < squareImages.length; i++) {
+                    const squareData = squareImages[i];
+                    const canvas = squareData.canvas;
+                    const halfHeight = canvas.height / 2;
+                    
+                    const topCanvas = document.createElement('canvas');
+                    const topCtx = topCanvas.getContext('2d');
+                    topCanvas.width = canvas.width;
+                    topCanvas.height = halfHeight;
+                    topCtx.drawImage(canvas, 0, 0, canvas.width, halfHeight, 0, 0, canvas.width, halfHeight);
+                    
+                    const bottomCanvas = document.createElement('canvas');
+                    const bottomCtx = bottomCanvas.getContext('2d');
+                    bottomCanvas.width = canvas.width;
+                    bottomCanvas.height = halfHeight;
+                    bottomCtx.drawImage(canvas, 0, halfHeight, canvas.width, halfHeight, 0, 0, canvas.width, halfHeight);
+                    
+                    splitParts.push({ top: topCanvas, bottom: bottomCanvas, name: squareData.name });
+                    
+                    const progress = 40 + ((i + 1) / squareImages.length) * 30;
+                    this.showProgress(true, `水平分割 ${i + 1}/${squareImages.length}`, progress);
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                for (let i = 0; i < splitParts.length; i++) {
+                    const currentPart = splitParts[i];
+                    const nextIndex = (i + 1) % splitParts.length;
+                    const nextPart = splitParts[nextIndex];
+                    
+                    const combinedCanvas = document.createElement('canvas');
+                    const combinedCtx = combinedCanvas.getContext('2d');
+                    
+                    const width = currentPart.top.width;
+                    const halfHeight = currentPart.top.height;
+                    
+                    combinedCanvas.width = width;
+                    combinedCanvas.height = halfHeight * 2 + borderHeight;
+                    
+                    combinedCtx.fillStyle = '#FFFFFF';
+                    combinedCtx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
+                    combinedCtx.drawImage(currentPart.top, 0, 0);
+                    combinedCtx.drawImage(nextPart.bottom, 0, halfHeight + borderHeight);
+                    
+                    const combinedName = `動畫車白邊_${currentPart.name.split('.')[0]}_${nextPart.name.split('.')[0]}`;
+                    this.addToPreview(combinedCanvas, combinedName);
+                    
+                    const progress = 70 + ((i + 1) / splitParts.length) * 30;
+                    this.showProgress(true, `組合製作 ${i + 1}/${splitParts.length}`, progress);
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                this.showProgress(false);
+                this.showStatus(`🎬 動畫車6張版(白邊)製作完成！生成了 ${splitParts.length} 張組合圖片`, 'success');
+            }
+
+            // 外框切除功能
+            getBorderValues() {
+                return {
+                    top: parseInt(document.getElementById('borderTop').value) || 0,
+                    bottom: parseInt(document.getElementById('borderBottom').value) || 0,
+                    left: parseInt(document.getElementById('borderLeft').value) || 0,
+                    right: parseInt(document.getElementById('borderRight').value) || 0
+                };
+            }
+
+            updateBorderOverlay() {
+                if (!this.img || !this.canvas) return;
+
+                const borderOverlay = document.getElementById('borderOverlay');
+                const rect = this.canvas.getBoundingClientRect();
+                const borders = this.getBorderValues();
+                
+                // 計算縮放比例
+                const scaleX = rect.width / this.canvas.width;
+                const scaleY = rect.height / this.canvas.height;
+                
+                // 更新各個邊界的位置和大小
+                const topArea = borderOverlay.querySelector('.top');
+                if (topArea) {
+                    topArea.style.height = (borders.top * scaleY) + 'px';
+                }
+                
+                const bottomArea = borderOverlay.querySelector('.bottom');
+                if (bottomArea) {
+                    bottomArea.style.height = (borders.bottom * scaleY) + 'px';
+                }
+                
+                const leftArea = borderOverlay.querySelector('.left');
+                if (leftArea) {
+                    leftArea.style.width = (borders.left * scaleX) + 'px';
+                    leftArea.style.top = (borders.top * scaleY) + 'px';
+                    leftArea.style.bottom = (borders.bottom * scaleY) + 'px';
+                }
+                
+                const rightArea = borderOverlay.querySelector('.right');
+                if (rightArea) {
+                    rightArea.style.width = (borders.right * scaleX) + 'px';
+                    rightArea.style.top = (borders.top * scaleY) + 'px';
+                    rightArea.style.bottom = (borders.bottom * scaleY) + 'px';
+                }
+            }
+
+            toggleBorderPreview() {
+                this.showBorderPreview = !this.showBorderPreview;
+                const borderOverlay = document.getElementById('borderOverlay');
+                
+                if (this.showBorderPreview) {
+                    borderOverlay.classList.add('active');
+                    this.updateBorderOverlay();
+                    this.showStatus('✅ 已開啟外框切除範圍顯示', 'success');
+                } else {
+                    borderOverlay.classList.remove('active');
+                    this.showStatus('✅ 已關閉外框切除範圍顯示', 'success');
+                }
+            }
+
+            previewBorderCrop() {
+                if (!this.img) {
+                    this.showStatus('⚠️ 請先上傳圖片', 'error');
+                    return;
+                }
+
+                const borders = this.getBorderValues();
+                const originalWidth = this.img.width;
+                const originalHeight = this.img.height;
+
+                // 檢查邊界值是否合理
+                if (borders.left + borders.right >= originalWidth || borders.top + borders.bottom >= originalHeight) {
+                    this.showStatus('⚠️ 外框設定過大，會導致圖片完全消失', 'error');
+                    return;
+                }
+
+                const newWidth = originalWidth - borders.left - borders.right;
+                const newHeight = originalHeight - borders.top - borders.bottom;
+
+                if (newWidth <= 0 || newHeight <= 0) {
+                    this.showStatus('⚠️ 外框設定過大，請調整數值', 'error');
+                    return;
+                }
+
+                const croppedCanvas = document.createElement('canvas');
+                const croppedCtx = croppedCanvas.getContext('2d');
+
+                croppedCanvas.width = newWidth;
+                croppedCanvas.height = newHeight;
+
+                croppedCtx.drawImage(
+                    this.img,
+                    borders.left, borders.top,
+                    newWidth, newHeight,
+                    0, 0,
+                    newWidth, newHeight
+                );
+
+                const currentImageName = this.uploadedImages[this.currentImageIndex]?.name || '當前圖片';
+                this.addToPreview(croppedCanvas, `${currentImageName}_外框切除預覽`);
+                this.showStatus(`✅ 預覽完成！原始：${originalWidth}×${originalHeight} → 切除後：${newWidth}×${newHeight}`, 'success');
+            }
+
+            async cropAllBorders() {
+                if (this.uploadedImages.length === 0) {
+                    this.showStatus('⚠️ 請先上傳圖片', 'error');
+                    return;
+                }
+
+                const borders = this.getBorderValues();
+                
+                // 檢查是否所有邊界都為0
+                if (borders.top === 0 && borders.bottom === 0 && borders.left === 0 && borders.right === 0) {
+                    this.showStatus('⚠️ 請設定外框切除值', 'error');
+                    return;
+                }
+
+                this.showProgress(true, '批量外框切除中...', 0);
+
+                let successCount = 0;
+                let skipCount = 0;
+
+                for (let i = 0; i < this.uploadedImages.length; i++) {
+                    const imageData = this.uploadedImages[i];
+                    const img = imageData.img;
+                    
+                    const originalWidth = img.width;
+                    const originalHeight = img.height;
+                    
+                    // 檢查每張圖片的邊界是否合理
+                    if (borders.left + borders.right >= originalWidth || borders.top + borders.bottom >= originalHeight) {
+                        skipCount++;
+                        const progress = ((i + 1) / this.uploadedImages.length) * 100;
+                        this.showProgress(true, `處理進度 ${i + 1}/${this.uploadedImages.length} (跳過${skipCount}張)`, progress);
+                        await new Promise(resolve => setTimeout(resolve, 10));
+                        continue;
+                    }
+
+                    const newWidth = originalWidth - borders.left - borders.right;
+                    const newHeight = originalHeight - borders.top - borders.bottom;
+
+                    if (newWidth <= 0 || newHeight <= 0) {
+                        skipCount++;
+                        const progress = ((i + 1) / this.uploadedImages.length) * 100;
+                        this.showProgress(true, `處理進度 ${i + 1}/${this.uploadedImages.length} (跳過${skipCount}張)`, progress);
+                        await new Promise(resolve => setTimeout(resolve, 10));
+                        continue;
+                    }
+
+                    const croppedCanvas = document.createElement('canvas');
+                    const croppedCtx = croppedCanvas.getContext('2d');
+
+                    croppedCanvas.width = newWidth;
+                    croppedCanvas.height = newHeight;
+
+                    croppedCtx.drawImage(
+                        img,
+                        borders.left, borders.top,
+                        newWidth, newHeight,
+                        0, 0,
+                        newWidth, newHeight
+                    );
+
+                    this.addToPreview(croppedCanvas, `${imageData.name}_外框切除`);
+                    successCount++;
+
+                    const progress = ((i + 1) / this.uploadedImages.length) * 100;
+                    this.showProgress(true, `處理進度 ${i + 1}/${this.uploadedImages.length}`, progress);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                this.showProgress(false);
+                
+                let message = `✅ 批量外框切除完成！成功處理 ${successCount} 張圖片`;
+                if (skipCount > 0) {
+                    message += `，跳過 ${skipCount} 張圖片（外框設定過大）`;
+                }
+                
+                this.showStatus(message, 'success');
+            }
+
+            // 收合/展開外框切除工具
+            toggleBorderCropSection() {
+                this.isBorderCropExpanded = !this.isBorderCropExpanded;
+                const content = document.getElementById('borderCropContent');
+                const icon = document.getElementById('borderToggleIcon');
+                
+                if (this.isBorderCropExpanded) {
+                    content.classList.remove('collapsed');
+                    icon.classList.remove('collapsed');
+                    icon.textContent = '▼';
+                    this.showStatus('✅ 已展開外框切除工具', 'success');
+                } else {
+                    content.classList.add('collapsed');
+                    icon.classList.add('collapsed');
+                    icon.textContent = '▶';
+                    this.showStatus('✅ 已收合外框切除工具', 'success');
+                    
+                    // 收合時自動關閉邊框預覽
+                    if (this.showBorderPreview) {
+                        this.showBorderPreview = false;
+                        const borderOverlay = document.getElementById('borderOverlay');
+                        borderOverlay.classList.remove('active');
+                    }
+                }
+            }
+
+            clearStoredImages() {
+                document.getElementById('imageGallery').style.display = 'none';
+                document.getElementById('imageGallery').innerHTML = '';
+                this.uploadedImages = [];
+                this.currentImageIndex = 0;
+                
+                if (this.canvas) {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.canvas.width = 0;
+                    this.canvas.height = 0;
+                }
+                
+                this.img = null;
+                this.clearSelection();
+                document.getElementById('fileInput').value = '';
+                
+                this.showStatus('🔄 已清除所有暫存圖片', 'success');
+            }
+
+            addToPreview(canvas, title) {
+                const previewGrid = document.getElementById('previewGrid');
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                
+                const previewCanvas = document.createElement('canvas');
+                const previewCtx = previewCanvas.getContext('2d');
+                
+                const maxPreviewSize = 160;
+                const scale = Math.min(maxPreviewSize / canvas.width, maxPreviewSize / canvas.height);
+                
+                previewCanvas.width = canvas.width * scale;
+                previewCanvas.height = canvas.height * scale;
+                
+                previewCtx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+                
+                const info = document.createElement('div');
+                info.className = 'preview-info';
+                info.innerHTML = `
+                    <strong>${title}</strong><br>
+                    <small>${canvas.width}×${canvas.height}</small>
+                `;
+                
+                previewItem.appendChild(previewCanvas);
+                previewItem.appendChild(info);
+                previewGrid.appendChild(previewItem);
+                
+                this.croppedImages.push({
+                    canvas: canvas,
+                    title: title,
+                    timestamp: Date.now()
+                });
+
+                // 添加點擊下載功能
+                previewItem.addEventListener('click', () => {
+                    this.downloadSingle(this.croppedImages.length - 1);
+                });
+            }
+
+            downloadSingle(index) {
+                if (this.croppedImages[index]) {
+                    const item = this.croppedImages[index];
+                    const link = document.createElement('a');
+                    link.download = `${item.title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}_${item.timestamp}.png`;
+                    link.href = item.canvas.toDataURL('image/png', 0.95);
+                    link.click();
+                    
+                    this.showStatus(`✅ 下載完成：${item.title}`, 'success');
+                }
+            }
+
+            async downloadAll() {
+                if (this.croppedImages.length === 0) {
+                    this.showStatus('⚠️ 沒有可下載的圖片', 'error');
+                    return;
+                }
+
+                this.showProgress(true, '準備下載...', 0);
+                
+                const downloadPromises = this.croppedImages.map((item, index) => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            const link = document.createElement('a');
+                            link.download = `${item.title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}_${item.timestamp}.png`;
+                            link.href = item.canvas.toDataURL('image/png', 0.95);
+                            link.click();
+                            
+                            const progress = ((index + 1) / this.croppedImages.length) * 100;
+                            this.showProgress(true, `下載進度 ${index + 1}/${this.croppedImages.length}`, progress);
+                            
+                            resolve();
+                        }, index * 200);
+                    });
+                });
+
+                await Promise.all(downloadPromises);
+                
+                this.showProgress(false);
+                this.showStatus(`✅ 成功下載 ${this.croppedImages.length} 張圖片！`, 'success');
+            }
+
+            // 性能優化：圖片壓縮
+            compressImage(canvas, quality = 0.8, maxWidth = 2000, maxHeight = 2000) {
+                if (canvas.width <= maxWidth && canvas.height <= maxHeight) {
+                    return canvas;
+                }
+                
+                const scale = Math.min(maxWidth / canvas.width, maxHeight / canvas.width);
+                const compressedCanvas = document.createElement('canvas');
+                const compressedCtx = compressedCanvas.getContext('2d');
+                
+                compressedCanvas.width = canvas.width * scale;
+                compressedCanvas.height = canvas.height * scale;
+                
+                compressedCtx.imageSmoothingEnabled = true;
+                compressedCtx.imageSmoothingQuality = 'high';
+                compressedCtx.drawImage(canvas, 0, 0, compressedCanvas.width, compressedCanvas.height);
+                
+                return compressedCanvas;
+            }
+
+            // 批次導出為ZIP（如果需要）
+            async exportAsZip() {
+                if (this.croppedImages.length === 0) {
+                    this.showStatus('⚠️ 沒有可導出的圖片', 'error');
+                    return;
+                }
+
+                try {
+                    // 檢查是否支援ZIP
+                    if (typeof JSZip === 'undefined') {
+                        this.downloadAll(); // 降級為普通下載
+                        return;
+                    }
+
+                    this.showProgress(true, '打包ZIP檔案...', 0);
+                    
+                    const zip = new JSZip();
+                    const folder = zip.folder('cropped_images');
+                    
+                    for (let i = 0; i < this.croppedImages.length; i++) {
+                        const item = this.croppedImages[i];
+                        const dataUrl = item.canvas.toDataURL('image/png', 0.95);
+                        const base64Data = dataUrl.split(',')[1];
+                        
+                        const filename = `${item.title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}_${item.timestamp}.png`;
+                        folder.file(filename, base64Data, { base64: true });
+                        
+                        const progress = ((i + 1) / this.croppedImages.length) * 80;
+                        this.showProgress(true, `打包進度 ${i + 1}/${this.croppedImages.length}`, progress);
+                        
+                        await new Promise(resolve => setTimeout(resolve, 10));
+                    }
+                    
+                    this.showProgress(true, '生成ZIP檔案...', 90);
+                    
+                    const zipBlob = await zip.generateAsync({ type: 'blob' });
+                    
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(zipBlob);
+                    link.download = `cropped_images_${Date.now()}.zip`;
+                    link.click();
+                    
+                    this.showProgress(false);
+                    this.showStatus(`✅ ZIP檔案下載完成！包含 ${this.croppedImages.length} 張圖片`, 'success');
+                    
+                } catch (error) {
+                    this.showProgress(false);
+                    this.showStatus('❌ ZIP導出失敗，將使用普通下載', 'error');
+                    this.downloadAll();
+                }
+            }
+        }
+
+        // 全域函數（保持向後相容）
+        let imageCropTool;
+
+        function clearSelection() {
+            imageCropTool?.clearSelection();
+        }
+
+        function splitAllImages() {
+            imageCropTool?.splitAllImages();
+        }
+
+        function cropAllByRatio() {
+            imageCropTool?.cropAllByRatio();
+        }
+
+        function cropAllSquare() {
+            imageCropTool?.cropAllSquare();
+        }
+
+        function cropSelected() {
+            imageCropTool?.cropSelected();
+        }
+
+        function downloadAll() {
+            imageCropTool?.downloadAll();
+        }
+
+        function createAnimationCards() {
+            imageCropTool?.createAnimationCards();
+        }
+
+        function createAnimationCardsWithBorder() {
+            imageCropTool?.createAnimationCardsWithBorder();
+        }
+
+        function clearPreviewResults() {
+            imageCropTool?.clearPreviewResults();
+        }
+
+        function clearStoredImages() {
+            imageCropTool?.clearStoredImages();
+        }
+
+        // 初始化應用
+        document.addEventListener('DOMContentLoaded', function() {
+            imageCropTool = new ImageCropTool();
+            
+            // 確保全域函數在初始化後可用
+            window.toggleBorderCropSection = function() {
+                imageCropTool?.toggleBorderCropSection();
+            };
+            
+            window.setBorderPreset = function(value) {
+                ['borderTop', 'borderBottom', 'borderLeft', 'borderRight'].forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) {
+                        input.value = value;
+                    }
+                });
+                
+                if (imageCropTool?.showBorderPreview) {
+                    imageCropTool.updateBorderOverlay();
+                }
+                
+                if (imageCropTool) {
+                    imageCropTool.showStatus(`✅ 已設定外框為 ${value}px`, 'success');
+                }
+            };
+            
+            window.previewBorderCrop = function() {
+                imageCropTool?.previewBorderCrop();
+            };
+            
+            window.cropAllBorders = function() {
+                imageCropTool?.cropAllBorders();
+            };
+            
+            window.toggleBorderPreview = function() {
+                imageCropTool?.toggleBorderPreview();
+            };
+            
+            // 添加版本資訊
+            console.log('🎨 優化版圖片裁切工具 v2.0');
+            console.log('✨ 新功能：');
+            console.log('  - 效能優化與進度顯示');
+            console.log('  - 鍵盤快捷鍵支援');
+            console.log('  - 拖拽與貼上功能');
+            console.log('  - 智能圖片壓縮');
+            console.log('  - 外框切除工具');
+            console.log('  - 更好的使用者體驗');
+            
+            // 檢查瀏覽器支援
+            if (!HTMLCanvasElement.prototype.getContext) {
+                alert('您的瀏覽器不支援 Canvas，請更新瀏覽器後再使用此工具。');
+            }
+            
+            // 檢查檔案 API 支援
+            if (!window.FileReader) {
+                alert('您的瀏覽器不支援檔案讀取功能，請更新瀏覽器後再使用此工具。');
+            }
+        });
+
+        // 防止頁面意外刷新時的提醒
+        window.addEventListener('beforeunload', function(e) {
+            if (imageCropTool?.croppedImages?.length > 0) {
+                const message = '您有未下載的處理結果，確定要離開嗎？';
+                e.returnValue = message;
+                return message;
+            }
+        });
+
+        // 錯誤處理
+        window.addEventListener('error', function(e) {
+            console.error('應用錯誤:', e.error);
+            if (imageCropTool) {
+                imageCropTool.showStatus('❌ 發生未預期的錯誤，請重新整理頁面', 'error');
+            }
+        });
+
+        // 記憶體清理
+        window.addEventListener('unload', function() {
+            if (imageCropTool) {
+                imageCropTool.uploadedImages = [];
+                imageCropTool.croppedImages = [];
+                imageCropTool.img = null;
+            }
+        });
+    </script>
+</body>
+</html>
+                

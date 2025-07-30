@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多功能圖片處理工具</title>
+    <title>多功能圖片與影片處理工具</title>
     <style>
         * {
             margin: 0;
@@ -20,49 +20,135 @@
         /* 頂部導航 */
         .main-header {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 20px 0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(15px);
+            padding: 25px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             position: sticky;
             top: 0;
             z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .main-header.collapsed {
+            padding: 12px 0;
+        }
+
+        .main-header.collapsed .nav-buttons {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+            transform: translateY(-20px);
+        }
+
+        .main-header.collapsed .main-title {
+            font-size: 1.8em;
+            margin-bottom: 0;
         }
 
         .header-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 20px;
             text-align: center;
         }
 
         .main-title {
-            font-size: 2.5em;
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            font-size: 3em;
+            background: linear-gradient(45deg, #667eea, #764ba2, #ff6b6b);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: titleGlow 3s ease-in-out infinite;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .collapse-toggle {
+            font-size: 0.6em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            opacity: 0.7;
+        }
+
+        .collapse-toggle:hover {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        .main-header.collapsed .collapse-toggle {
+            transform: rotate(180deg);
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.1); }
         }
 
         .nav-buttons {
             display: flex;
-            justify-content: center;
-            gap: 20px;
             flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            max-width: 1200px;
+            margin: 0 auto;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 200px;
+            opacity: 1;
+            overflow: hidden;
+            padding: 0 10px;
         }
 
         .nav-btn {
-            padding: 15px 30px;
+            padding: 12px 16px;
             border: none;
-            border-radius: 50px;
-            font-size: 1.1em;
+            border-radius: 10px;
+            font-size: 0.9em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 180px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            flex: 0 1 auto;
+            min-width: 120px;
+            max-width: 150px;
+        }
+
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .nav-btn:hover::before {
+            left: 100%;
         }
 
         .nav-btn.home {
@@ -90,14 +176,29 @@
             color: white;
         }
 
+        .nav-btn.tutorial {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+        }
+
+        .nav-btn.grid-tool {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .nav-btn.advanced-crop {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
         .nav-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
 
         .nav-btn.active {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
 
         .nav-btn.active::after {
@@ -106,17 +207,36 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 4px;
             background: rgba(255, 255, 255, 0.8);
+            border-radius: 2px 2px 0 0;
+        }
+
+        .nav-btn-icon {
+            font-size: 1.4em;
+            margin-bottom: 2px;
+        }
+
+        .nav-btn-title {
+            font-size: 0.9em;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .nav-btn-desc {
+            font-size: 0.7em;
+            opacity: 0.85;
+            margin-top: 0;
+            line-height: 1;
         }
 
         /* 工具容器 */
         .tools-container {
-            min-height: calc(100vh - 140px);
+            min-height: calc(100vh - 180px);
         }
 
         .tool-page {
-            animation: fadeIn 0.5s ease-in-out;
+            animation: fadeIn 0.6s ease-in-out;
         }
 
         .tool-page.hidden {
@@ -126,7 +246,7 @@
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px);
             }
             to {
                 opacity: 1;
@@ -137,65 +257,101 @@
         /* 歡迎頁面 */
         .welcome-page {
             text-align: center;
-            padding: 60px 20px;
-            max-width: 800px;
+            padding: 80px 20px;
+            max-width: 1200px;
             margin: 0 auto;
             color: white;
         }
 
         .welcome-title {
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 3.5em;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+            animation: welcomeFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes welcomeFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
 
         .welcome-subtitle {
-            font-size: 1.3em;
-            margin-bottom: 40px;
-            opacity: 0.9;
+            font-size: 1.4em;
+            margin-bottom: 50px;
+            opacity: 0.95;
+            line-height: 1.6;
         }
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 30px;
-            margin-top: 50px;
+            margin-top: 60px;
         }
 
         .feature-card {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 30px;
-            transition: transform 0.3s ease;
+            padding: 35px;
+            transition: all 0.4s ease;
             cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
         }
 
         .feature-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-15px) scale(1.03);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .feature-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
         }
 
         .feature-title {
-            font-size: 1.4em;
-            margin-bottom: 10px;
-            font-weight: 600;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
         }
 
         .feature-desc {
-            opacity: 0.9;
-            line-height: 1.6;
+            opacity: 0.92;
+            line-height: 1.7;
+            position: relative;
+            z-index: 1;
         }
 
         /* iframe 容器 */
         .iframe-container {
             width: 100%;
-            height: calc(100vh - 140px);
+            height: calc(100vh - 180px);
             position: relative;
+            border-radius: 20px 20px 0 0;
+            overflow: hidden;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
         }
 
         .iframe-container iframe {
@@ -210,19 +366,20 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 200px;
+            height: 300px;
             color: white;
-            font-size: 1.2em;
+            font-size: 1.3em;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .spinner {
             border: 4px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top: 4px solid white;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
-            margin-right: 15px;
         }
 
         @keyframes spin {
@@ -232,40 +389,41 @@
 
         /* 動畫機介紹樣式 */
         .animation-intro {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 50px 20px;
             color: white;
         }
 
         .intro-header {
             text-align: center;
-            margin-bottom: 50px;
+            margin-bottom: 60px;
         }
 
         .intro-header h1 {
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 3.2em;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .intro-header p {
-            font-size: 1.3em;
-            opacity: 0.9;
-            line-height: 1.6;
+            font-size: 1.4em;
+            opacity: 0.95;
+            line-height: 1.7;
         }
 
         .intro-section {
             background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 40px;
+            margin-bottom: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .intro-section h2 {
-            font-size: 2em;
-            margin-bottom: 20px;
+            font-size: 2.2em;
+            margin-bottom: 25px;
             display: flex;
             align-items: center;
             gap: 15px;
@@ -277,153 +435,525 @@
 
         .work-principles {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
         }
 
         .principle-item {
             background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
+            padding: 25px;
             border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .principle-item h3 {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            font-size: 1.3em;
         }
 
         .applications {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
         }
 
         .application-item {
             text-align: center;
-            padding: 20px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .application-item:hover {
+            transform: translateY(-5px);
         }
 
         .application-item .icon {
-            font-size: 3em;
-            margin-bottom: 10px;
+            font-size: 3.2em;
+            margin-bottom: 15px;
         }
 
         .application-item h4 {
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
         }
 
         .application-item p {
-            font-size: 0.9em;
-            opacity: 0.8;
+            font-size: 0.95em;
+            opacity: 0.85;
         }
 
         .action-section {
             text-align: center;
-            margin-top: 40px;
+            margin-top: 50px;
         }
 
         .action-card {
             background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 20px;
-            margin-bottom: 30px;
+            padding: 40px;
+            border-radius: 25px;
+            margin-bottom: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .action-card h3 {
-            font-size: 1.5em;
-            margin-bottom: 15px;
-        }
-
-        .action-card p {
-            opacity: 0.9;
+            font-size: 1.8em;
             margin-bottom: 20px;
         }
 
+        .action-card p {
+            opacity: 0.95;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
         .action-btn {
-            padding: 15px 35px;
+            padding: 18px 40px;
             background: linear-gradient(45deg, #ff6b6b, #ee5a24);
             color: white;
             border: none;
             border-radius: 50px;
-            font-size: 1.2em;
+            font-size: 1.3em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
         }
 
         .action-btn:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.4);
         }
 
         .back-btn {
-            padding: 12px 25px;
+            padding: 15px 30px;
             background: rgba(255, 255, 255, 0.2);
             color: white;
             border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 25px;
+            border-radius: 30px;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 1.1em;
         }
 
         .back-btn:hover {
             background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* 統計資訊 */
+        .stats-section {
+            margin-top: 60px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #fdcb6e;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
         }
 
         /* 響應式設計 */
         @media (max-width: 768px) {
             .main-title {
-                font-size: 2em;
+                font-size: 2.2em;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .main-header.collapsed .main-title {
+                font-size: 1.5em;
             }
 
             .nav-buttons {
-                flex-direction: column;
-                align-items: center;
+                gap: 6px;
+                max-height: 140px;
+                padding: 0 5px;
             }
 
             .nav-btn {
-                width: 250px;
+                padding: 10px 12px;
+                min-height: 50px;
+                font-size: 0.85em;
+                min-width: 100px;
+                max-width: 120px;
+            }
+
+            .nav-btn-icon {
+                font-size: 1.2em;
+                margin-bottom: 1px;
+            }
+
+            .nav-btn-title {
+                font-size: 0.8em;
+            }
+
+            .nav-btn-desc {
+                font-size: 0.65em;
             }
 
             .welcome-title {
-                font-size: 2.2em;
+                font-size: 2.5em;
             }
 
             .welcome-subtitle {
-                font-size: 1.1em;
+                font-size: 1.2em;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
             }
 
             .intro-header h1 {
-                font-size: 2.2em;
+                font-size: 2.5em;
             }
 
             .intro-header p {
+                font-size: 1.2em;
+            }
+
+            .intro-section {
+                padding: 25px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .welcome-page {
+                padding: 40px 15px;
+            }
+
+            .feature-card {
+                padding: 25px;
+            }
+
+            .nav-buttons {
+                gap: 4px;
+                max-height: 120px;
+                padding: 0 3px;
+            }
+
+            .nav-btn {
+                padding: 8px 10px;
+                min-height: 45px;
+                font-size: 0.8em;
+                min-width: 85px;
+                max-width: 100px;
+            }
+
+            .nav-btn-icon {
+                font-size: 1.1em;
+                margin-bottom: 1px;
+            }
+
+            .nav-btn-title {
+                font-size: 0.75em;
+                line-height: 1;
+            }
+
+            .nav-btn-desc {
+                font-size: 0.6em;
+            }
+
+            .main-title {
+                font-size: 1.8em;
+            }
+
+            .main-header.collapsed .main-title {
+                font-size: 1.3em;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .nav-buttons {
+                gap: 3px;
+                max-height: 100px;
+                padding: 0 2px;
+            }
+
+            .nav-btn {
+                padding: 6px 8px;
+                min-height: 40px;
+                font-size: 0.75em;
+                min-width: 75px;
+                max-width: 85px;
+            }
+
+            .nav-btn-icon {
+                font-size: 1em;
+                margin-bottom: 0;
+            }
+
+            .nav-btn-title {
+                font-size: 0.7em;
+                line-height: 0.9;
+            }
+
+            .nav-btn-desc {
+                display: none; /* 極小螢幕隱藏描述 */
+            }
+
+            .main-title {
+                font-size: 1.6em;
+            }
+
+            .main-header.collapsed .main-title {
+                font-size: 1.2em;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .nav-buttons {
+                gap: 2px;
+                max-height: 90px;
+            }
+
+            .nav-btn {
+                padding: 5px 6px;
+                min-height: 35px;
+                font-size: 0.7em;
+                min-width: 65px;
+                max-width: 75px;
+                gap: 2px;
+            }
+
+            .nav-btn-icon {
+                font-size: 0.9em;
+            }
+
+            .nav-btn-title {
+                font-size: 0.65em;
+            }
+
+            .main-title {
+                font-size: 1.4em;
+            }
+
+            .main-header.collapsed .main-title {
                 font-size: 1.1em;
             }
+        }
+
+        /* 新增工具提示 */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: rgba(0,0,0,0.9);
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1001;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 漂浮標籤 */
+        .floating-brand {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            user-select: none;
+            animation: floatPulse 3s ease-in-out infinite;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .floating-brand:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a5acd 100%);
+        }
+
+        .floating-brand:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .floating-brand-icon {
+            font-size: 16px;
+            animation: iconRotate 4s linear infinite;
+        }
+
+        @keyframes floatPulse {
+            0%, 100% { 
+                transform: translateY(0px);
+                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            }
+            50% { 
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            }
+        }
+
+        @keyframes iconRotate {
+            0%, 90% { transform: rotate(0deg); }
+            95% { transform: rotate(15deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* 響應式調整漂浮標籤 */
+        @media (max-width: 768px) {
+            .floating-brand {
+                bottom: 15px;
+                right: 15px;
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .floating-brand {
+                bottom: 12px;
+                right: 12px;
+                padding: 8px 14px;
+                font-size: 12px;
+            }
+            
+            .floating-brand-icon {
+                font-size: 14px;
+            }
+        }
+
+        /* 確保漂浮標籤不會被其他元素遮擋 */
+        .floating-brand {
+            position: fixed !important;
+            z-index: 99999 !important;
         }
     </style>
 </head>
 <body>
     <div id="app">
         <!-- 主要導航頭部 -->
-        <header class="main-header">
+        <header class="main-header" id="mainHeader">
             <div class="header-content">
-                <h1 class="main-title">🎨 多功能圖片處理工具</h1>
+                <h1 class="main-title" onclick="toggleNavigation()">
+                    🎨 多功能圖片與影片處理工具
+                    <span class="collapse-toggle" id="collapseToggle">▼</span>
+                </h1>
                 <nav class="nav-buttons">
-                    <button class="nav-btn home active" onclick="showTool('home')">
-                        🏠 首頁
-                    </button>
-                    <button class="nav-btn merger" onclick="showTool('merger')">
-                        📸 拼接工具
-                    </button>
-                    <button class="nav-btn crop" onclick="showTool('crop')">
-                        ✂️ 修圖工具
-                    </button>
-                    <button class="nav-btn video" onclick="showTool('video')">
-                        🎬 影片快照
-                    </button>
-                    <button class="nav-btn animation" onclick="showTool('animation')">
-                        🎭 動畫機
-                    </button>
+                    <div class="tooltip">
+                        <button class="nav-btn home active" onclick="showTool('home')">
+                            <div class="nav-btn-icon">🏠</div>
+                            <div class="nav-btn-title">首頁</div>
+                            <div class="nav-btn-desc">工具總覽</div>
+                        </button>
+                        <span class="tooltiptext">返回主頁面，查看所有可用工具</span>
+                    </div>
+                    
+                    <div class="tooltip">
+                        <button class="nav-btn merger" onclick="showTool('merger')">
+                            <div class="nav-btn-icon">📸</div>
+                            <div class="nav-btn-title">拼接工具</div>
+                            <div class="nav-btn-desc">A4排版</div>
+                        </button>
+                        <span class="tooltiptext">將6張圖片完美拼接到A4紙上</span>
+                    </div>
+                    
+                    <div class="tooltip">
+                        <button class="nav-btn crop" onclick="showTool('crop')">
+                            <div class="nav-btn-icon">✂️</div>
+                            <div class="nav-btn-title">修圖工具</div>
+                            <div class="nav-btn-desc">基礎裁切</div>
+                        </button>
+                        <span class="tooltiptext">圖片裁切、分割、動畫製作</span>
+                    </div>
+                    
+                    <div class="tooltip">
+                        <button class="nav-btn advanced-crop" onclick="showTool('advanced-crop')">
+                            <div class="nav-btn-icon">🔧</div>
+                            <div class="nav-btn-title">進階修圖</div>
+                            <div class="nav-btn-desc">專業處理</div>
+                        </button>
+                        <span class="tooltiptext">專業級圖片處理，支援外框切除等進階功能</span>
+                    </div>
+                    
+                    <div class="tooltip">
+                        <button class="nav-btn video" onclick="showTool('video')">
+                            <div class="nav-btn-icon">🎬</div>
+                            <div class="nav-btn-title">影片快照</div>
+                            <div class="nav-btn-desc">影片轉圖</div>
+                        </button>
+                        <span class="tooltiptext">從影片中自動截取關鍵畫面</span>
+                    </div>
+
+                    <div class="tooltip">
+                        <button class="nav-btn grid-tool" onclick="showTool('grid-tool')">
+                            <div class="nav-btn-icon">🔲</div>
+                            <div class="nav-btn-title">方框陣列</div>
+                            <div class="nav-btn-desc">批量擷取</div>
+                        </button>
+                        <span class="tooltiptext">方框陣列擷取工具，批量處理圖片區域</span>
+                    </div>
+
+                    <div class="tooltip">
+                        <button class="nav-btn animation" onclick="showTool('animation')">
+                            <div class="nav-btn-icon">🎭</div>
+                            <div class="nav-btn-title">動畫機</div>
+                            <div class="nav-btn-desc">動畫介紹</div>
+                        </button>
+                        <span class="tooltiptext">了解動畫機原理與應用</span>
+                    </div>
+
+                    <div class="tooltip">
+                        <button class="nav-btn tutorial" onclick="showTool('tutorial')">
+                            <div class="nav-btn-icon">📚</div>
+                            <div class="nav-btn-title">互動教學</div>
+                            <div class="nav-btn-desc">學習課程</div>
+                        </button>
+                        <span class="tooltiptext">前往何老師教學網的互動課程</span>
+                    </div>
                 </nav>
             </div>
         </header>
@@ -433,39 +963,92 @@
             <!-- 歡迎頁面 -->
             <div id="home" class="tool-page">
                 <div class="welcome-page">
-                    <h2 class="welcome-title">歡迎使用圖片處理工具</h2>
-                    <p class="welcome-subtitle">專業的線上圖片處理平台，提供多種實用功能</p>
+                    <h2 class="welcome-title">歡迎使用圖片與影片處理工具</h2>
+                    <p class="welcome-subtitle">專業的線上媒體處理平台，提供多種實用功能，從基礎裁切到進階動畫製作</p>
                     
                     <div class="features-grid">
                         <div class="feature-card" onclick="showTool('merger')">
                             <div class="feature-icon">📸</div>
-                            <h3 class="feature-title">拼接工具</h3>
-                            <p class="feature-desc">將6張圖片完美拼接到A4紙上，支援單頁和雙頁排版，適合證件照處理</p>
+                            <h3 class="feature-title">圖片拼接工具</h3>
+                            <p class="feature-desc">將6張圖片完美排列在A4紙上，支援單頁橫向和雙頁縱向排版，專為證件照處理設計</p>
                         </div>
                         
                         <div class="feature-card" onclick="showTool('crop')">
                             <div class="feature-icon">✂️</div>
-                            <h3 class="feature-title">修圖工具</h3>
-                            <p class="feature-desc">強大的圖片裁切功能，支援手動選擇、批量處理、動畫車製作等多種模式</p>
+                            <h3 class="feature-title">基礎修圖工具</h3>
+                            <p class="feature-desc">圖片裁切、批量處理、動畫車製作等多種模式，支援手動選擇和智能分割</p>
+                        </div>
+
+                        <div class="feature-card" onclick="showTool('advanced-crop')">
+                            <div class="feature-icon">🔧</div>
+                            <h3 class="feature-title">進階修圖工具</h3>
+                            <p class="feature-desc">專業級圖片處理，支援外框切除、智能壓縮、鍵盤快捷鍵等進階功能</p>
                         </div>
                         
                         <div class="feature-card" onclick="showTool('video')">
                             <div class="feature-icon">🎬</div>
-                            <h3 class="feature-title">影片快照</h3>
-                            <p class="feature-desc">從影片中自動截取關鍵畫面，支援多種格式和品質設定，批量下載</p>
+                            <h3 class="feature-title">影片快照工具</h3>
+                            <p class="feature-desc">從影片中自動截取關鍵畫面，支援多種格式和品質設定，可批量下載ZIP檔案</p>
+                        </div>
+
+                        <div class="feature-card" onclick="showTool('grid-tool')">
+                            <div class="feature-icon">🔲</div>
+                            <h3 class="feature-title">方框陣列工具</h3>
+                            <p class="feature-desc">畫出模板方框，在原圖上複製陣列並擷取框內圖片，適合批量處理相似區域</p>
                         </div>
 
                         <div class="feature-card" onclick="showTool('animation')">
                             <div class="feature-icon">🎭</div>
-                            <h3 class="feature-title">動畫機</h3>
-                            <p class="feature-desc">圖片動畫製作工具，創造生動有趣的動態效果，讓靜態圖片動起來</p>
+                            <h3 class="feature-title">動畫機介紹</h3>
+                            <p class="feature-desc">深入了解動畫機原理、歷史發展與應用場景，為創作動畫提供理論基礎</p>
+                        </div>
+
+                        <div class="feature-card" onclick="showTool('tutorial')">
+                            <div class="feature-icon">📚</div>
+                            <h3 class="feature-title">互動式教學</h3>
+                            <p class="feature-desc">完整的動畫機學習課程，從基礎概念到實作練習，互動式學習體驗</p>
                         </div>
                     </div>
 
-                    <div style="margin-top: 50px; padding: 30px; background: rgba(255, 255, 255, 0.1); border-radius: 15px;">
-                        <h3 style="margin-bottom: 15px; font-size: 1.5em;">🚀 快速開始</h3>
-                        <p style="margin-bottom: 10px;">點擊上方按鈕或功能卡片即可開始使用對應工具</p>
-                        <p style="opacity: 0.8;">所有工具都是免費使用，無需註冊或登入</p>
+                    <div class="stats-section">
+                        <h3 style="margin-bottom: 30px; font-size: 1.8em; text-align: center;">🚀 工具特色</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-number">8+</div>
+                                <div class="stat-label">專業工具</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">100%</div>
+                                <div class="stat-label">免費使用</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">0</div>
+                                <div class="stat-label">需要註冊</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">∞</div>
+                                <div class="stat-label">使用次數</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 60px; padding: 40px; background: rgba(255, 255, 255, 0.1); border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <h3 style="margin-bottom: 20px; font-size: 1.8em;">🚀 快速開始</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 25px;">
+                            <div style="padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 15px;">
+                                <h4 style="margin-bottom: 10px;">📱 新手推薦</h4>
+                                <p>從「基礎修圖工具」開始，簡單易上手</p>
+                            </div>
+                            <div style="padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 15px;">
+                                <h4 style="margin-bottom: 10px;">🎯 專業用戶</h4>
+                                <p>使用「進階修圖工具」獲得更多功能</p>
+                            </div>
+                            <div style="padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 15px;">
+                                <h4 style="margin-bottom: 10px;">🎬 影片處理</h4>
+                                <p>「影片快照工具」輕鬆提取影片畫面</p>
+                            </div>
+                        </div>
+                        <p style="margin-top: 25px; opacity: 0.9; text-align: center;">點擊上方按鈕或功能卡片即可開始使用對應工具</p>
                     </div>
                 </div>
             </div>
@@ -558,43 +1141,91 @@
             <div id="merger" class="tool-page hidden">
                 <div class="loading">
                     <div class="spinner"></div>
-                    正在載入拼接工具...
+                    <div>正在載入拼接工具...</div>
                 </div>
             </div>
 
             <div id="crop" class="tool-page hidden">
                 <div class="loading">
                     <div class="spinner"></div>
-                    正在載入修圖工具...
+                    <div>正在載入基礎修圖工具...</div>
+                </div>
+            </div>
+
+            <div id="advanced-crop" class="tool-page hidden">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>正在載入進階修圖工具...</div>
                 </div>
             </div>
 
             <div id="video" class="tool-page hidden">
                 <div class="loading">
                     <div class="spinner"></div>
-                    正在載入影片快照工具...
+                    <div>正在載入影片快照工具...</div>
+                </div>
+            </div>
+
+            <div id="grid-tool" class="tool-page hidden">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>正在載入方框陣列工具...</div>
+                </div>
+            </div>
+
+            <div id="tutorial" class="tool-page hidden">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>正在載入互動教學課程...</div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- 漂浮品牌標籤 -->
+    <a href="#" class="floating-brand" id="floatingBrand" onclick="showBrandInfo(event)" title="點擊了解更多">
+        <span class="floating-brand-icon">🎓</span>
+        <span>何老師教學網</span>
+    </a>
+
     <script>
-        // 全局變數
+        // 全域變數
         let currentTool = 'home';
+        let isNavCollapsed = false;
         const toolsLoaded = {
             merger: false,
             crop: false,
-            video: false
+            'advanced-crop': false,
+            video: false,
+            'grid-tool': false,
+            tutorial: false
         };
 
         const toolFiles = {
-            merger: 'image_merger_V2_20250720.html',
-            crop: 'image_crop_tool_fixed.html',
-            video: 'video_frame_extractor.html'
+            merger: 'merger_Page.html',
+            crop: 'crop_page.html',
+            'advanced-crop': 'crop_tool_page.html',
+            video: 'video_cut_page.html',
+            'grid-tool': 'grid_cutter_page.html',
+            animation: 'animation_page.html',
+            tutorial: 'https://sites.google.com/view/zhengxueflipbook/'
         };
 
-        // 主要功能函數
-        function showTool(toolName) {
+        // 導航收起/展開功能
+        function autoCollapseNavigation() {
+            if (currentTool !== 'home' && !isNavCollapsed) {
+                setTimeout(() => {
+                    if (currentTool !== 'home') {
+                        toggleNavigation();
+                    }
+                }, 2000); // 2秒後自動收起
+            }
+        }
+
+        // 確保函數在全域範圍內可用
+        window.showTool = function(toolName) {
+            console.log('🎯 切換工具:', toolName);
+            
             currentTool = toolName;
             
             // 更新按鈕狀態
@@ -602,10 +1233,15 @@
                 btn.classList.remove('active');
             });
             
-            const activeButton = document.querySelector('.nav-btn.' + toolName);
-            if (activeButton) {
-                activeButton.classList.add('active');
-            }
+            // 尋找對應的按鈕並設為 active
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => {
+                if (btn.classList.contains(toolName) || 
+                    (toolName === 'advanced-crop' && btn.classList.contains('advanced-crop')) ||
+                    (toolName === 'grid-tool' && btn.classList.contains('grid-tool'))) {
+                    btn.classList.add('active');
+                }
+            });
 
             // 隱藏所有頁面
             document.querySelectorAll('.tool-page').forEach(function(page) {
@@ -618,10 +1254,90 @@
                 targetPage.classList.remove('hidden');
             }
 
-            // 載入外部工具
-            if (['merger', 'crop', 'video'].indexOf(toolName) !== -1 && !toolsLoaded[toolName]) {
-                loadTool(toolName);
+            // 載入外部工具或跳轉外部連結
+            if (toolFiles[toolName]) {
+                if (toolFiles[toolName].startsWith('http')) {
+                    // 外部連結直接跳轉
+                    console.log('🌐 開啟外部連結:', toolFiles[toolName]);
+                    window.open(toolFiles[toolName], '_blank');
+                    // 跳轉後返回首頁
+                    setTimeout(() => {
+                        showTool('home');
+                    }, 500);
+                    return;
+                } else if (!toolsLoaded[toolName]) {
+                    // 內部檔案載入
+                    console.log('📂 載入內部檔案:', toolFiles[toolName]);
+                    loadTool(toolName);
+                }
             }
+
+            // 更新頁面標題
+            updatePageTitle(toolName);
+
+            // 如果切換到工具頁面，啟動自動收起
+            if (toolName !== 'home' && toolName !== 'animation') {
+                autoCollapseNavigation();
+            }
+        };
+
+        // 導航收起/展開功能
+        window.toggleNavigation = function() {
+            const header = document.getElementById('mainHeader');
+            const toggle = document.getElementById('collapseToggle');
+            
+            isNavCollapsed = !isNavCollapsed;
+            
+            if (isNavCollapsed) {
+                header.classList.add('collapsed');
+                toggle.textContent = '▲';
+                // 儲存狀態到 localStorage
+                localStorage.setItem('navCollapsed', 'true');
+            } else {
+                header.classList.remove('collapsed');
+                toggle.textContent = '▼';
+                localStorage.setItem('navCollapsed', 'false');
+            }
+        };
+
+        // 品牌標籤點擊事件
+        window.showBrandInfo = function(event) {
+            event.preventDefault();
+            
+            // 創建彈出訊息
+            const message = `🎓 何老師教學網
+────────────────
+專業的線上教學平台
+提供多元化的學習資源
+
+📚 特色服務：
+• 圖片與影片處理工具
+• 程式設計教學
+• 數位技能培訓
+• 互動式學習體驗
+
+✨ 感謝您的使用！`;
+            
+            // 使用原生 alert 或創建自定義彈窗
+            if (confirm(message + '\n\n是否要了解更多教學資源？')) {
+                // 跳轉到何老師教學網
+                window.open('https://sites.google.com/view/zhengxueflipbook/', '_blank');
+            }
+        };
+
+        function updatePageTitle(toolName) {
+            const titles = {
+                'home': '多功能圖片與影片處理工具',
+                'merger': '圖片拼接工具 - 多功能處理平台',
+                'crop': '基礎修圖工具 - 多功能處理平台',
+                'advanced-crop': '進階修圖工具 - 多功能處理平台',
+                'video': '影片快照工具 - 多功能處理平台',
+                'grid-tool': '方框陣列工具 - 多功能處理平台',
+                'animation': '動畫機介紹 - 多功能處理平台',
+                'tutorial': '互動教學課程 - 多功能處理平台'
+            };
+            
+            document.title = titles[toolName] || '多功能圖片與影片處理工具';
         }
 
         function loadTool(toolName) {
@@ -629,7 +1345,32 @@
             const fileName = toolFiles[toolName];
             
             if (!fileName) {
-                targetPage.innerHTML = '<div style="text-align: center; color: white; padding: 50px;">工具載入失敗</div>';
+                targetPage.innerHTML = `
+                    <div style="text-align: center; color: white; padding: 80px 20px;">
+                        <h3 style="font-size: 2em; margin-bottom: 20px;">⚠️ 工具載入失敗</h3>
+                        <p style="font-size: 1.2em; margin-bottom: 30px;">無法載入 ${toolName}</p>
+                        <button onclick="location.reload()" style="
+                            padding: 15px 30px; 
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                            color: white; 
+                            border: none; 
+                            border-radius: 25px; 
+                            cursor: pointer; 
+                            font-size: 1.1em;
+                            font-weight: 600;
+                        ">🔄 重新載入</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // 如果是外部連結（互動教學），直接跳轉
+            if (fileName.startsWith('http')) {
+                window.open(fileName, '_blank');
+                // 跳轉後返回首頁
+                setTimeout(() => {
+                    showTool('home');
+                }, 500);
                 return;
             }
 
@@ -640,21 +1381,45 @@
             iframe.src = fileName;
             iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
             
+            // 添加載入狀態
             iframe.onload = function() {
                 toolsLoaded[toolName] = true;
+                // 可以在這裡添加載入完成的提示
+                console.log(`✅ ${toolName} 工具載入完成`);
             };
             
             iframe.onerror = function() {
-                targetPage.innerHTML = 
-                    '<div style="text-align: center; color: white; padding: 50px;">' +
-                    '<h3>⚠️ 工具載入失敗</h3>' +
-                    '<p style="margin: 20px 0;">無法載入 ' + fileName + '</p>' +
-                    '<p style="opacity: 0.8;">請確認文件是否存在於同一資料夾中</p>' +
-                    '<button onclick="loadTool(\'' + toolName + '\')" style="' +
-                    'margin-top: 20px; padding: 10px 20px; background: #667eea; ' +
-                    'color: white; border: none; border-radius: 25px; cursor: pointer; font-size: 1em;">' +
-                    '🔄 重新載入</button>' +
-                    '</div>';
+                targetPage.innerHTML = `
+                    <div style="text-align: center; color: white; padding: 80px 20px; max-width: 600px; margin: 0 auto;">
+                        <h3 style="font-size: 2.2em; margin-bottom: 25px;">⚠️ 工具載入失敗</h3>
+                        <p style="font-size: 1.2em; margin-bottom: 20px; line-height: 1.6;">無法載入 <strong>${fileName}</strong></p>
+                        <p style="opacity: 0.8; margin-bottom: 35px; line-height: 1.5;">請確認文件是否存在於同一資料夾中，或檢查網路連線狀態</p>
+                        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                            <button onclick="loadTool('${toolName}')" style="
+                                padding: 15px 30px; 
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                color: white; 
+                                border: none; 
+                                border-radius: 25px; 
+                                cursor: pointer; 
+                                font-size: 1.1em;
+                                font-weight: 600;
+                                transition: all 0.3s ease;
+                            ">🔄 重新載入</button>
+                            <button onclick="showTool('home')" style="
+                                padding: 15px 30px; 
+                                background: rgba(255, 255, 255, 0.2); 
+                                color: white; 
+                                border: 2px solid rgba(255, 255, 255, 0.3); 
+                                border-radius: 25px; 
+                                cursor: pointer; 
+                                font-size: 1.1em;
+                                font-weight: 600;
+                                transition: all 0.3s ease;
+                            ">🏠 返回首頁</button>
+                        </div>
+                    </div>
+                `;
             };
             
             iframeContainer.appendChild(iframe);
@@ -662,11 +1427,165 @@
             targetPage.appendChild(iframeContainer);
         }
 
-        // 初始化
+        // 頁面載入完成後的初始化
         document.addEventListener('DOMContentLoaded', function() {
-            // 簡單初始化，不涉及 URL 操作
-            console.log('多功能圖片處理工具已載入完成');
+            // 初始化提示
+            console.log('🎨 多功能圖片與影片處理工具已載入完成');
+            console.log('📦 可用工具：');
+            console.log('  📸 圖片拼接工具 → merger_Page.html');
+            console.log('  ✂️ 基礎修圖工具 → crop_page.html');
+            console.log('  🔧 進階修圖工具 → crop_tool_page.html');
+            console.log('  🎬 影片快照工具 → video_cut_page.html');
+            console.log('  🔲 方框陣列工具 → grid_cutter_page.html');
+            console.log('  🎭 動畫機介紹 → animation_page.html');
+            console.log('  📚 互動教學課程 → https://sites.google.com/view/zhengxueflipbook/');
+
+            // 恢復導航收起狀態
+            const savedNavState = localStorage.getItem('navCollapsed');
+            if (savedNavState === 'true') {
+                toggleNavigation();
+            }
+
+            // 檢查 URL 參數來決定要顯示哪個工具
+            const urlParams = new URLSearchParams(window.location.search);
+            const tool = urlParams.get('tool');
+            if (tool && (toolFiles[tool] || tool === 'home' || tool === 'animation')) {
+                showTool(tool);
+            }
+
+            // 測試按鈕功能
+            console.log('🔧 測試按鈕功能...');
+            console.log('showTool 函數:', typeof window.showTool);
+            console.log('toggleNavigation 函數:', typeof window.toggleNavigation);
+
+            // 添加鍵盤快捷鍵
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + 數字鍵快速切換工具
+                if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '8') {
+                    e.preventDefault();
+                    const toolIndex = parseInt(e.key) - 1;
+                    const tools = ['home', 'merger', 'crop', 'advanced-crop', 'video', 'grid-tool', 'animation', 'tutorial'];
+                    if (tools[toolIndex]) {
+                        showTool(tools[toolIndex]);
+                    }
+                }
+                
+                // ESC 鍵返回首頁
+                if (e.key === 'Escape') {
+                    showTool('home');
+                }
+
+                // Ctrl/Cmd + H 切換導航收起狀態
+                if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+                    e.preventDefault();
+                    toggleNavigation();
+                }
+            });
+
+            // 添加性能監控
+            if (window.performance && window.performance.mark) {
+                window.performance.mark('app-ready');
+            }
+
+            // 檢查瀏覽器支援度
+            if (!window.FileReader) {
+                console.warn('⚠️ 瀏覽器不支援檔案讀取功能，部分工具可能無法正常運作');
+            }
+
+            if (!HTMLCanvasElement.prototype.getContext) {
+                console.warn('⚠️ 瀏覽器不支援 Canvas，圖片處理功能可能受限');
+            }
         });
+
+        // 錯誤處理
+        window.addEventListener('error', function(e) {
+            console.error('頁面發生錯誤:', e.error);
+            
+            // 如果是工具載入錯誤，提供降級方案
+            if (e.filename && Object.values(toolFiles).some(file => e.filename.includes(file))) {
+                console.log('🔄 嘗試重新載入工具...');
+            }
+        });
+
+        // 添加版本信息和使用統計
+        const version = '2.0.0';
+        const buildDate = '2025-01-30';
+        
+        console.log(`📊 版本資訊: v${version} (${buildDate})`);
+        console.log('🚀 享受使用我們的工具！如有問題請聯繫技術支援。');
+
+        // 性能優化：預載入重要工具
+        window.addEventListener('load', function() {
+            // 延遲預載入常用工具，提升使用體驗
+            setTimeout(() => {
+                const commonTools = ['crop', 'video'];
+                commonTools.forEach(tool => {
+                    if (!toolsLoaded[tool] && toolFiles[tool] && !toolFiles[tool].startsWith('http')) {
+                        const link = document.createElement('link');
+                        link.rel = 'prefetch';
+                        link.href = toolFiles[tool];
+                        document.head.appendChild(link);
+                    }
+                });
+            }, 2000);
+        });
+
+        // 添加使用者體驗增強
+        let lastToolSwitch = Date.now();
+        
+        function enhancedShowTool(toolName) {
+            const now = Date.now();
+            if (now - lastToolSwitch < 300) {
+                // 防止快速點擊
+                return;
+            }
+            lastToolSwitch = now;
+            
+            showTool(toolName);
+            
+            // 更新 URL 但不刷新頁面
+            if (window.history && window.history.pushState) {
+                const newUrl = toolName === 'home' ? 
+                    window.location.pathname : 
+                    `${window.location.pathname}?tool=${toolName}`;
+                window.history.pushState({tool: toolName}, '', newUrl);
+            }
+        }
+
+        // 處理瀏覽器後退/前進
+        window.addEventListener('popstate', function(e) {
+            if (e.state && e.state.tool) {
+                showTool(e.state.tool);
+            } else {
+                showTool('home');
+            }
+        });
+
+        // 漂浮標籤的額外互動效果
+        document.addEventListener('DOMContentLoaded', function() {
+            const floatingBrand = document.getElementById('floatingBrand');
+            
+            // 滑鼠進入時的特效
+            floatingBrand.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.1) rotate(2deg)';
+            });
+            
+            floatingBrand.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0px) scale(1) rotate(0deg)';
+            });
+            
+            // 每隔一段時間閃爍提醒
+            setInterval(() => {
+                floatingBrand.style.animation = 'none';
+                setTimeout(() => {
+                    floatingBrand.style.animation = 'floatPulse 3s ease-in-out infinite';
+                }, 100);
+            }, 30000); // 每30秒重新開始動畫
+        });
+
+        // 移除之前的綁定
+        // window.showTool = enhancedShowTool;
+        // window.toggleNavigation = toggleNavigation;
     </script>
 </body>
 </html>

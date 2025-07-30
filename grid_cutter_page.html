@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方框陣列擷取工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+            background: white;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.3em;
+            color: #555;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            color: #888;
+            font-size: 1em;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .settings-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .setting-group {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 1em;
+        }
+
+        .setting-group input, .setting-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .setting-group input:focus, .setting-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .setting-group .help-text {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .main-content {
+            padding: 30px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .image-container {
+            flex: 2;
+            min-width: 400px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: #f8f9fa;
+        }
+
+        #imageCanvas {
+            display: block;
+            max-width: 100%;
+            cursor: crosshair;
+        }
+
+        .selection-box {
+            position: absolute;
+            border: 3px solid #667eea;
+            background: rgba(102, 126, 234, 0.15);
+            pointer-events: all;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+            display: none;
+            cursor: move;
+        }
+
+        .selection-box:hover {
+            border-color: #5a6fd8;
+            background: rgba(102, 126, 234, 0.25);
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #667eea;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: nw-resize;
+        }
+
+        .resize-handle.top-left {
+            top: -5px;
+            left: -5px;
+            cursor: nw-resize;
+        }
+
+        .resize-handle.top-right {
+            top: -5px;
+            right: -5px;
+            cursor: ne-resize;
+        }
+
+        .resize-handle.bottom-left {
+            bottom: -5px;
+            left: -5px;
+            cursor: sw-resize;
+        }
+
+        .resize-handle.bottom-right {
+            bottom: -5px;
+            right: -5px;
+            cursor: se-resize;
+        }
+
+        .selection-info-overlay {
+            position: absolute;
+            top: -30px;
+            left: 0;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .array-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        .array-frame {
+            position: absolute;
+            border: 2px dashed #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            box-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
+        }
+
+        .array-frame.template {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+            border-style: solid;
+            border-width: 3px;
+        }
+
+        .preview-container {
+            flex: 1;
+            min-width: 350px;
+        }
+
+        .preview-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #495057;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .selection-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .selection-info h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+
+        .selection-info p {
+            margin: 4px 0;
+            color: #424242;
+            font-size: 0.95em;
+        }
+
+        .array-preview {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .array-preview h4 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .array-grid {
+            display: inline-grid;
+            gap: 3px;
+            background: #667eea;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .array-cell {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 2px;
+            border: 1px solid #ccc;
+        }
+
+        .array-cell.template {
+            background: #ffeb3b;
+            border-color: #ff9800;
+        }
+
+        .preview-grid {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .preview-item {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .preview-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .preview-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .preview-item canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 24px;
+            height: 24px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 20;
+        }
+
+        .delete-btn:hover {
+            background: #dc3545;
+            transform: scale(1.1);
+        }
+
+        .preview-info {
+            padding: 8px;
+            background: #f8f9fa;
+            font-size: 11px;
+            color: #6c757d;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #212529;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        }
+
+        .btn:disabled {
+            background: #6c757d !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-panel {
+            background: #e9ecef;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .info-panel h3 {
+            margin-bottom: 15px;
+            color: #495057;
+            font-size: 1.3em;
+        }
+
+        .info-panel ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .info-panel li {
+            margin-bottom: 8px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            border-radius: 25px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .step.completed {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .settings-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+            }
+
+            .step-indicator {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔲 方框陣列擷取工具</h1>
+            <p>畫出模板方框，在原圖上複製陣列並擷取框內圖片</p>
+        </div>
+
+        <div class="controls">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">🖼️</div>
+                <div class="upload-text">點擊上傳圖片或拖拽到此處</div>
+                <div class="upload-subtext">支援 JPG、PNG、GIF 格式</div>
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
+            </div>
+
+            <div class="step-indicator">
+                <div class="step active" id="step1">
+                    <span>1️⃣</span>
+                    <span>上傳圖片</span>
+                </div>
+                <div class="step" id="step2">
+                    <span>2️⃣</span>
+                    <span>畫出方框</span>
+                </div>
+                <div class="step" id="step3">
+                    <span>3️⃣</span>
+                    <span>設定陣列</span>
+                </div>
+                <div class="step" id="step4">
+                    <span>4️⃣</span>
+                    <span>擷取圖片</span>
+                </div>
+            </div>
+
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <label for="arrayCols">陣列欄數</label>
+                    <select id="arrayCols">
+                        <option value="2">2 欄</option>
+                        <option value="3" selected>3 欄</option>
+                        <option value="4">4 欄</option>
+                        <option value="5">5 欄</option>
+                        <option value="6">6 欄</option>
+                    </select>
+                    <div class="help-text">水平方向複製幾個方框</div>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="arrayRows">陣列列數</label>
+                    <select id="arrayRows">
+                        <option value="2">2 列</option>
+                        <option value="3" selected>3 列</option>
+                        <option value="4">4 列</option>
+                        <option value="5">5 列</option>
+                        <option value="6">6 列</option>
+                    </select>
+                    <div class="help-text">垂直方向複製幾個方框</div>
+                </div>
+
+                <div class="setting-group">
+                    <label for="gapSizeX">水平間距 (px)</label>
+                    <input type="number" id="gapSizeX" value="0" min="0" max="200">
+                    <div class="help-text">方框之間的水平空隙</div>
+                </div>
+
+                <div class="setting-group">
+                    <label for="gapSizeY">垂直間距 (px)</label>
+                    <input type="number" id="gapSizeY" value="0" min="0" max="200">
+                    <div class="help-text">方框之間的垂直空隙</div>
+                </div>
+
+                <div class="setting-group">
+                    <label for="outputSize">輸出尺寸 (px)</label>
+                    <input type="number" id="outputSize" value="200" min="50" max="1000" step="10">
+                    <div class="help-text">每個擷取圖片的邊長</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="image-container">
+                <div class="canvas-wrapper" style="display: none;" id="canvasWrapper">
+                    <canvas id="imageCanvas"></canvas>
+                    <div class="selection-box" id="selectionBox">
+                        <div class="resize-handle top-left"></div>
+                        <div class="resize-handle top-right"></div>
+                        <div class="resize-handle bottom-left"></div>
+                        <div class="resize-handle bottom-right"></div>
+                        <div class="selection-info-overlay" id="selectionInfoOverlay">100×100</div>
+                    </div>
+                    <div class="array-overlay" id="arrayOverlay"></div>
+                </div>
+                
+                <div class="info-panel">
+                    <h3>🎯 操作說明</h3>
+                    <ul>
+                        <li><strong>步驟 1：</strong>上傳您要處理的圖片</li>
+                        <li><strong>步驟 2：</strong>用滑鼠畫出模板方框（藍色框）</li>
+                        <li><strong>🔄 調整方框：</strong>拖拽移動位置，拖拽角落調整大小</li>
+                        <li><strong>步驟 3：</strong>設定陣列參數（欄數、列數、間距）</li>
+                        <li><strong>🔍 預覽陣列：</strong>紅色虛線框顯示擷取位置</li>
+                        <li><strong>步驟 4：</strong>點擊擷取，獲得每個框內的圖片</li>
+                        <li><strong>💡 概念：</strong>將藍色模板框複製成陣列，擷取每個位置的圖片內容</li>
+                        <li><strong>📐 自動正方形：</strong>模板框會自動調整為正方形</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <h2 class="preview-title">🎨 方框模板與預覽</h2>
+                
+                <div class="selection-info" id="selectionInfo" style="display: none;">
+                    <h4>📐 模板方框</h4>
+                    <p id="selectionDetails">尚未畫出方框</p>
+                </div>
+
+                <div class="array-preview" id="arrayPreview" style="display: none;">
+                    <h4>🔲 陣列預覽</h4>
+                    <div class="array-grid" id="arrayGrid"></div>
+                    <p id="arrayInfo">將複製成 3×3 = 9 個擷取框</p>
+                </div>
+
+                <div class="preview-grid" id="previewGrid"></div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="clearSelectionButton" disabled>🗑️ 清除模板</button>
+                    <button class="btn btn-primary" id="generateButton" disabled>🔍 擷取圖片</button>
+                    <button class="btn btn-warning" id="clearPreviewButton" disabled>🧹 清除預覽</button>
+                    <button class="btn btn-success" id="downloadAllButton" disabled>📥 下載全部</button>
+                    <button class="btn btn-warning" id="clearAllButton">🔄 重新開始</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        let canvas, ctx, img;
+        let isSelecting = false;
+        let isDragging = false;
+        let isResizing = false;
+        let startX, startY, endX, endY;
+        let dragStartX, dragStartY;
+        let selectionRect = null;
+        let extractedImages = [];
+        let currentResizeHandle = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            canvas = document.getElementById('imageCanvas');
+            ctx = canvas.getContext('2d');
+            
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadArea = document.getElementById('uploadArea');
+
+            // 文件上傳
+            fileInput.addEventListener('change', handleFileSelect);
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            // 拖拽功能
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+
+            // 滑鼠選擇功能
+            canvas.addEventListener('mousedown', startSelection);
+            canvas.addEventListener('mousemove', updateSelection);
+            canvas.addEventListener('mouseup', endSelection);
+
+            // 方框移動和縮放功能
+            const selectionBox = document.getElementById('selectionBox');
+            selectionBox.addEventListener('mousedown', startDragOrResize);
+            document.addEventListener('mousemove', handleDragOrResize);
+            document.addEventListener('mouseup', endDragOrResize);
+
+            // 設定變更事件
+            ['arrayCols', 'arrayRows', 'gapSizeX', 'gapSizeY', 'outputSize'].forEach(id => {
+                document.getElementById(id).addEventListener('change', updateArrayPreview);
+            });
+
+            // 按鈕事件
+            document.getElementById('clearSelectionButton').addEventListener('click', clearSelection);
+            document.getElementById('generateButton').addEventListener('click', extractImages);
+            document.getElementById('clearPreviewButton').addEventListener('click', clearPreview);
+            document.getElementById('downloadAllButton').addEventListener('click', downloadAll);
+            document.getElementById('clearAllButton').addEventListener('click', clearAll);
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                loadImage(file);
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            if (files.length > 0) {
+                loadImage(files[0]);
+            }
+        }
+
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img = new Image();
+                img.onload = function() {
+                    displayImage();
+                    updateStep(1, 'completed');
+                    updateStep(2, 'active');
+                    showStatus('圖片載入成功！請用滑鼠畫出模板方框', 'success');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function displayImage() {
+            const canvasWrapper = document.getElementById('canvasWrapper');
+            canvasWrapper.style.display = 'inline-block';
+            
+            // 設置 canvas 大小（保持比例，最大寬度600px）
+            const maxWidth = 600;
+            const maxHeight = 500;
+            let { width, height } = img;
+
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width *= ratio;
+                height *= ratio;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            
+            // 繪製圖片
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // 重置選區
+            clearSelection();
+        }
+
+        function startSelection(e) {
+            if (!img) return;
+            
+            // 如果點擊在已存在的選區上，不開始新選區
+            if (selectionRect) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const selectionBoxRect = document.getElementById('selectionBox').getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+                
+                if (mouseX >= (selectionBoxRect.left - canvasRect.left) && 
+                    mouseX <= (selectionBoxRect.right - canvasRect.left) &&
+                    mouseY >= (selectionBoxRect.top - canvasRect.top) && 
+                    mouseY <= (selectionBoxRect.bottom - canvasRect.top)) {
+                    return; // 點擊在選區內，不創建新選區
+                }
+            }
+            
+            isSelecting = true;
+            const rect = canvas.getBoundingClientRect();
+            startX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            startY = (e.clientY - rect.top) * (canvas.height / rect.height);
+            
+            // 清除之前的選區
+            selectionRect = null;
+            document.getElementById('selectionBox').style.display = 'block';
+            clearArrayOverlay();
+        }
+
+        function updateSelection(e) {
+            if (!isSelecting || !img) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            let currentX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            let currentY = (e.clientY - rect.top) * (canvas.height / rect.height);
+            
+            // 強制正方形
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+            const maxDelta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+            
+            endX = startX + (deltaX >= 0 ? maxDelta : -maxDelta);
+            endY = startY + (deltaY >= 0 ? maxDelta : -maxDelta);
+            
+            updateSelectionBox();
+        }
+
+        function endSelection(e) {
+            if (!isSelecting) return;
+            isSelecting = false;
+            
+            if (Math.abs(endX - startX) > 20 && Math.abs(endY - startY) > 20) {
+                // 有效選區
+                selectionRect = {
+                    x: Math.min(startX, endX),
+                    y: Math.min(startY, endY),
+                    width: Math.abs(endX - startX),
+                    height: Math.abs(endY - startY)
+                };
+                
+                updateSelectionInfo();
+                updateArrayPreview();
+                updateStep(2, 'completed');
+                updateStep(3, 'active');
+                document.getElementById('clearSelectionButton').disabled = false;
+                document.getElementById('generateButton').disabled = false;
+                showStatus('模板方框設定完成！可以設定陣列參數', 'success');
+            }
+        }
+
+        function updateSelectionBox() {
+            const selectionBox = document.getElementById('selectionBox');
+            const selectionInfoOverlay = document.getElementById('selectionInfoOverlay');
+            const rect = canvas.getBoundingClientRect();
+            
+            if (selectionRect) {
+                // 使用已保存的選區數據
+                const x = selectionRect.x * (rect.width / canvas.width);
+                const y = selectionRect.y * (rect.height / canvas.height);
+                const width = selectionRect.width * (rect.width / canvas.width);
+                const height = selectionRect.height * (rect.height / canvas.height);
+                
+                selectionBox.style.left = x + 'px';
+                selectionBox.style.top = y + 'px';
+                selectionBox.style.width = width + 'px';
+                selectionBox.style.height = height + 'px';
+                
+                // 更新信息覆蓋層
+                selectionInfoOverlay.textContent = `${Math.round(selectionRect.width)}×${Math.round(selectionRect.height)}`;
+            } else {
+                // 選擇過程中的臨時顯示
+                const x = Math.min(startX, endX) * (rect.width / canvas.width);
+                const y = Math.min(startY, endY) * (rect.height / canvas.height);
+                const width = Math.abs(endX - startX) * (rect.width / canvas.width);
+                const height = Math.abs(endY - startY) * (rect.height / canvas.height);
+                
+                selectionBox.style.left = x + 'px';
+                selectionBox.style.top = y + 'px';
+                selectionBox.style.width = width + 'px';
+                selectionBox.style.height = height + 'px';
+                
+                // 更新信息覆蓋層
+                selectionInfoOverlay.textContent = `${Math.round(Math.abs(endX - startX))}×${Math.round(Math.abs(endY - startY))}`;
+            }
+        }
+
+        function startDragOrResize(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            if (!selectionRect) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // 檢查是否點擊縮放手柄
+            const handles = e.target.closest('.resize-handle');
+            if (handles) {
+                isResizing = true;
+                currentResizeHandle = handles.className.split(' ')[1]; // top-left, top-right, etc.
+                dragStartX = mouseX;
+                dragStartY = mouseY;
+                return;
+            }
+            
+            // 檢查是否在選區內（拖拽移動）
+            const selectionBoxRect = document.getElementById('selectionBox').getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            if (mouseX >= (selectionBoxRect.left - canvasRect.left) && 
+                mouseX <= (selectionBoxRect.right - canvasRect.left) &&
+                mouseY >= (selectionBoxRect.top - canvasRect.top) && 
+                mouseY <= (selectionBoxRect.bottom - canvasRect.top)) {
+                isDragging = true;
+                dragStartX = mouseX;
+                dragStartY = mouseY;
+            }
+        }
+
+        function handleDragOrResize(e) {
+            if (!selectionRect) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            if (isResizing && currentResizeHandle) {
+                // 處理縮放
+                const deltaX = (mouseX - dragStartX) * (canvas.width / rect.width);
+                const deltaY = (mouseY - dragStartY) * (canvas.width / rect.width);
+                
+                let newRect = { ...selectionRect };
+                
+                switch (currentResizeHandle) {
+                    case 'top-left':
+                        newRect.x += deltaX;
+                        newRect.y += deltaY;
+                        newRect.width -= deltaX;
+                        newRect.height -= deltaY;
+                        break;
+                    case 'top-right':
+                        newRect.y += deltaY;
+                        newRect.width += deltaX;
+                        newRect.height -= deltaY;
+                        break;
+                    case 'bottom-left':
+                        newRect.x += deltaX;
+                        newRect.width -= deltaX;
+                        newRect.height += deltaY;
+                        break;
+                    case 'bottom-right':
+                        newRect.width += deltaX;
+                        newRect.height += deltaY;
+                        break;
+                }
+                
+                // 強制正方形
+                const size = Math.max(Math.abs(newRect.width), Math.abs(newRect.height));
+                if (newRect.width < 0) {
+                    newRect.x = newRect.x + newRect.width;
+                    newRect.width = size;
+                } else {
+                    newRect.width = size;
+                }
+                if (newRect.height < 0) {
+                    newRect.y = newRect.y + newRect.height;
+                    newRect.height = size;
+                } else {
+                    newRect.height = size;
+                }
+                
+                // 確保不超出畫布邊界
+                newRect.x = Math.max(0, Math.min(newRect.x, canvas.width - newRect.width));
+                newRect.y = Math.max(0, Math.min(newRect.y, canvas.height - newRect.height));
+                
+                if (newRect.width > 20 && newRect.height > 20) {
+                    selectionRect = newRect;
+                    updateSelectionBox();
+                    updateSelectionInfo();
+                    updateArrayPreview();
+                }
+                
+                dragStartX = mouseX;
+                dragStartY = mouseY;
+                
+            } else if (isDragging) {
+                // 處理拖拽移動
+                const deltaX = (mouseX - dragStartX) * (canvas.width / rect.width);
+                const deltaY = (mouseY - dragStartY) * (canvas.width / rect.width);
+                
+                let newX = selectionRect.x + deltaX;
+                let newY = selectionRect.y + deltaY;
+                
+                // 確保不超出畫布邊界
+                newX = Math.max(0, Math.min(newX, canvas.width - selectionRect.width));
+                newY = Math.max(0, Math.min(newY, canvas.height - selectionRect.height));
+                
+                selectionRect.x = newX;
+                selectionRect.y = newY;
+                
+                updateSelectionBox();
+                updateSelectionInfo();
+                updateArrayPreview();
+                
+                dragStartX = mouseX;
+                dragStartY = mouseY;
+            }
+        }
+
+        function endDragOrResize(e) {
+            if (isDragging || isResizing) {
+                isDragging = false;
+                isResizing = false;
+                currentResizeHandle = null;
+                showStatus('模板方框調整完成！', 'success');
+            }
+        }
+
+        function updateSelectionInfo() {
+            if (!selectionRect) return;
+            
+            const selectionInfo = document.getElementById('selectionInfo');
+            const selectionDetails = document.getElementById('selectionDetails');
+            
+            selectionDetails.textContent = `模板尺寸：${Math.round(selectionRect.width)} × ${Math.round(selectionRect.height)} px`;
+            selectionInfo.style.display = 'block';
+        }
+
+        function updateArrayPreview() {
+            if (!selectionRect) return;
+            
+            const cols = parseInt(document.getElementById('arrayCols').value);
+            const rows = parseInt(document.getElementById('arrayRows').value);
+            const gapX = parseInt(document.getElementById('gapSizeX').value);
+            const gapY = parseInt(document.getElementById('gapSizeY').value);
+            
+            // 更新陣列預覽小圖示
+            const arrayPreview = document.getElementById('arrayPreview');
+            const arrayGrid = document.getElementById('arrayGrid');
+            const arrayInfo = document.getElementById('arrayInfo');
+            
+            arrayGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            arrayGrid.innerHTML = '';
+            
+            for (let i = 0; i < rows * cols; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'array-cell';
+                if (i === 0) cell.classList.add('template'); // 標記模板方框
+                arrayGrid.appendChild(cell);
+            }
+            
+            arrayInfo.textContent = `將在原圖上複製成 ${cols}×${rows} = ${cols * rows} 個擷取框`;
+            arrayPreview.style.display = 'block';
+            
+            // 更新圖片上的陣列覆蓋層
+            updateArrayOverlay();
+            
+            updateStep(3, 'completed');
+            updateStep(4, 'active');
+        }
+
+        function updateArrayOverlay() {
+            if (!selectionRect) return;
+            
+            const cols = parseInt(document.getElementById('arrayCols').value);
+            const rows = parseInt(document.getElementById('arrayRows').value);
+            const gapX = parseInt(document.getElementById('gapSizeX').value);
+            const gapY = parseInt(document.getElementById('gapSizeY').value);
+            
+            const arrayOverlay = document.getElementById('arrayOverlay');
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // 清除現有覆蓋層
+            arrayOverlay.innerHTML = '';
+            
+            // 計算原圖縮放比例
+            const scaleX = img.width / canvas.width;
+            const scaleY = img.height / canvas.height;
+            
+            // 計算在原圖中的實際選區和間距
+            const realRect = {
+                x: selectionRect.x * scaleX,
+                y: selectionRect.y * scaleY,
+                width: selectionRect.width * scaleX,
+                height: selectionRect.height * scaleY
+            };
+            const realGapX = gapX * scaleX;
+            const realGapY = gapY * scaleY;
+            
+            // 為每個位置創建方框覆蓋層
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    // 計算在原圖中的位置
+                    const realX = realRect.x + col * (realRect.width + realGapX);
+                    const realY = realRect.y + row * (realRect.height + realGapY);
+                    
+                    // 檢查是否超出圖片邊界
+                    if (realX + realRect.width <= img.width && realY + realRect.height <= img.height) {
+                        // 轉換回顯示座標
+                        const displayX = realX / scaleX;
+                        const displayY = realY / scaleY;
+                        const displayWidth = realRect.width / scaleX;
+                        const displayHeight = realRect.height / scaleY;
+                        
+                        const frame = document.createElement('div');
+                        frame.className = 'array-frame';
+                        if (row === 0 && col === 0) {
+                            frame.classList.add('template'); // 模板框用實線藍色
+                        }
+                        
+                        const rect = canvas.getBoundingClientRect();
+                        frame.style.left = (displayX * (rect.width / canvas.width)) + 'px';
+                        frame.style.top = (displayY * (rect.height / canvas.height)) + 'px';
+                        frame.style.width = (displayWidth * (rect.width / canvas.width)) + 'px';
+                        frame.style.height = (displayHeight * (rect.height / canvas.height)) + 'px';
+                        
+                        arrayOverlay.appendChild(frame);
+                    }
+                }
+            }
+        }
+
+        function clearArrayOverlay() {
+            const arrayOverlay = document.getElementById('arrayOverlay');
+            arrayOverlay.innerHTML = '';
+        }
+
+        function extractImages() {
+            if (!img || !selectionRect) return;
+            
+            const cols = parseInt(document.getElementById('arrayCols').value);
+            const rows = parseInt(document.getElementById('arrayRows').value);
+            const gapX = parseInt(document.getElementById('gapSizeX').value);
+            const gapY = parseInt(document.getElementById('gapSizeY').value);
+            const outputSize = parseInt(document.getElementById('outputSize').value);
+            
+            // 計算原圖縮放比例
+            const scaleX = img.width / canvas.width;
+            const scaleY = img.height / canvas.height;
+            
+            // 計算原圖中的實際選區和間距
+            const realRect = {
+                x: selectionRect.x * scaleX,
+                y: selectionRect.y * scaleY,
+                width: selectionRect.width * scaleX,
+                height: selectionRect.height * scaleY
+            };
+            const realGapX = gapX * scaleX;
+            const realGapY = gapY * scaleY;
+            
+            extractedImages = [];
+            const previewGrid = document.getElementById('previewGrid');
+            previewGrid.innerHTML = '';
+            
+            let extractedCount = 0;
+            
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    // 計算在原圖中的位置
+                    const realX = realRect.x + col * (realRect.width + realGapX);
+                    const realY = realRect.y + row * (realRect.height + realGapY);
+                    
+                    // 檢查是否超出圖片邊界
+                    if (realX + realRect.width <= img.width && realY + realRect.height <= img.height) {
+                        const extractedCanvas = document.createElement('canvas');
+                        const extractedCtx = extractedCanvas.getContext('2d');
+                        
+                        extractedCanvas.width = outputSize;
+                        extractedCanvas.height = outputSize;
+                        
+                        // 從原圖擷取並縮放到輸出尺寸
+                        extractedCtx.drawImage(
+                            img,
+                            realX, realY,
+                            realRect.width, realRect.height,
+                            0, 0,
+                            outputSize, outputSize
+                        );
+                        
+                        // 添加到預覽
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'preview-item';
+                        previewItem.setAttribute('data-index', extractedImages.length);
+                        
+                        const previewCanvas = document.createElement('canvas');
+                        const previewCtx = previewCanvas.getContext('2d');
+                        previewCanvas.width = 120;
+                        previewCanvas.height = 120;
+                        
+                        previewCtx.drawImage(extractedCanvas, 0, 0, 120, 120);
+                        
+                        // 刪除按鈕
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-btn';
+                        deleteBtn.innerHTML = '×';
+                        deleteBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            deleteSingle(extractedImages.length);
+                        };
+                        
+                        const info = document.createElement('div');
+                        info.className = 'preview-info';
+                        info.innerHTML = `
+                            R${row + 1}C${col + 1}
+                            <br>
+                            <a href="#" onclick="downloadSingle(${extractedImages.length})" style="color: #667eea; text-decoration: none; font-weight: bold;">📥 下載</a>
+                        `;
+                        
+                        previewItem.appendChild(previewCanvas);
+                        previewItem.appendChild(deleteBtn);
+                        previewItem.appendChild(info);
+                        previewGrid.appendChild(previewItem);
+                        
+                        // 保存到數組
+                        extractedImages.push({
+                            canvas: extractedCanvas,
+                            filename: `extracted_${row + 1}_${col + 1}_${outputSize}x${outputSize}.png`,
+                            position: `第${row + 1}行第${col + 1}列`
+                        });
+                        
+                        extractedCount++;
+                    }
+                }
+            }
+            
+            updateStep(4, 'completed');
+            document.getElementById('downloadAllButton').disabled = false;
+            document.getElementById('clearPreviewButton').disabled = false;
+            showStatus(`圖片擷取完成！共擷取 ${extractedCount} 張 ${outputSize}×${outputSize} 像素的圖片`, 'success');
+        }
+
+        function downloadSingle(index) {
+            if (extractedImages[index]) {
+                const link = document.createElement('a');
+                link.download = extractedImages[index].filename;
+                link.href = extractedImages[index].canvas.toDataURL('image/png');
+                link.click();
+                showStatus(`下載 ${extractedImages[index].position} 完成！`, 'success');
+            }
+        }
+
+        function deleteSingle(index) {
+            if (extractedImages[index]) {
+                const itemName = extractedImages[index].position;
+                
+                // 從數組中移除
+                extractedImages.splice(index, 1);
+                
+                // 重新渲染預覽網格
+                refreshPreviewGrid();
+                
+                showStatus(`已刪除 ${itemName}`, 'success');
+                
+                // 如果沒有圖片了，禁用下載按鈕
+                if (extractedImages.length === 0) {
+                    document.getElementById('downloadAllButton').disabled = true;
+                    document.getElementById('clearPreviewButton').disabled = true;
+                }
+            }
+        }
+
+        function refreshPreviewGrid() {
+            const previewGrid = document.getElementById('previewGrid');
+            previewGrid.innerHTML = '';
+            
+            extractedImages.forEach((item, newIndex) => {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                previewItem.setAttribute('data-index', newIndex);
+                
+                const previewCanvas = document.createElement('canvas');
+                const previewCtx = previewCanvas.getContext('2d');
+                previewCanvas.width = 120;
+                previewCanvas.height = 120;
+                
+                previewCtx.drawImage(item.canvas, 0, 0, 120, 120);
+                
+                // 刪除按鈕
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.innerHTML = '×';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteSingle(newIndex);
+                };
+                
+                const info = document.createElement('div');
+                info.className = 'preview-info';
+                info.innerHTML = `
+                    ${item.position}
+                    <br>
+                    <a href="#" onclick="downloadSingle(${newIndex})" style="color: #667eea; text-decoration: none; font-weight: bold;">📥 下載</a>
+                `;
+                
+                previewItem.appendChild(previewCanvas);
+                previewItem.appendChild(deleteBtn);
+                previewItem.appendChild(info);
+                previewGrid.appendChild(previewItem);
+            });
+        }
+
+        function clearPreview() {
+            if (extractedImages.length === 0) {
+                showStatus('沒有預覽內容需要清除', 'error');
+                return;
+            }
+            
+            const count = extractedImages.length;
+            
+            // 清空數組和預覽網格
+            extractedImages = [];
+            document.getElementById('previewGrid').innerHTML = '';
+            
+            // 重置按鈕狀態
+            document.getElementById('downloadAllButton').disabled = true;
+            document.getElementById('clearPreviewButton').disabled = true;
+            
+            // 重置步驟指示器
+            if (selectionRect) {
+                updateStep(4, 'active');
+            } else {
+                updateStep(4, '');
+            }
+            
+            showStatus(`已清除 ${count} 個預覽圖片，可以重新擷取`, 'success');
+        }
+
+        function downloadAll() {
+            if (extractedImages.length === 0) {
+                showStatus('沒有可下載的圖片', 'error');
+                return;
+            }
+
+            let downloadCount = 0;
+            extractedImages.forEach((item, index) => {
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.download = item.filename;
+                    link.href = item.canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    downloadCount++;
+                    if (downloadCount === extractedImages.length) {
+                        showStatus(`全部 ${extractedImages.length} 張圖片下載完成！`, 'success');
+                    }
+                }, index * 300); // 延遲下載避免瀏覽器阻擋
+            });
+
+            showStatus(`開始批量下載 ${extractedImages.length} 張擷取的圖片...`, 'success');
+        }
+
+        function clearSelection() {
+            selectionRect = null;
+            document.getElementById('selectionBox').style.display = 'none';
+            document.getElementById('selectionInfo').style.display = 'none';
+            document.getElementById('arrayPreview').style.display = 'none';
+            clearArrayOverlay();
+            
+            // 重置按鈕狀態
+            document.getElementById('clearSelectionButton').disabled = true;
+            document.getElementById('generateButton').disabled = true;
+            
+            // 更新步驟指示器
+            updateStep(2, 'active');
+            updateStep(3, '');
+            updateStep(4, '');
+            
+            showStatus('已清除模板方框，請重新畫出方框', 'success');
+        }
+
+        function clearAll() {
+            // 重置所有狀態
+            img = null;
+            selectionRect = null;
+            extractedImages = [];
+            isSelecting = false;
+            
+            // 隱藏元素
+            document.getElementById('canvasWrapper').style.display = 'none';
+            document.getElementById('selectionBox').style.display = 'none';
+            document.getElementById('selectionInfo').style.display = 'none';
+            document.getElementById('arrayPreview').style.display = 'none';
+            document.getElementById('previewGrid').innerHTML = '';
+            document.getElementById('fileInput').value = '';
+            clearArrayOverlay();
+            
+            // 重置按鈕狀態
+            document.getElementById('clearSelectionButton').disabled = true;
+            document.getElementById('generateButton').disabled = true;
+            document.getElementById('downloadAllButton').disabled = true;
+            document.getElementById('clearPreviewButton').disabled = true;
+            
+            // 重置步驟指示器
+            updateStep(1, 'active');
+            updateStep(2, '');
+            updateStep(3, '');
+            updateStep(4, '');
+            
+            // 重置畫布
+            if (canvas) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            showStatus('已重置所有內容，可以重新開始', 'success');
+        }
+
+        function updateStep(stepNumber, status) {
+            const step = document.getElementById(`step${stepNumber}`);
+            step.className = 'step';
+            if (status) {
+                step.classList.add(status);
+            }
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 4000);
+        }
+
+        // 防止右鍵菜單在畫布上出現
+        canvas?.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // 窗口大小改變時重新計算選擇框位置和陣列覆蓋層
+        window.addEventListener('resize', () => {
+            if (selectionRect) {
+                updateSelectionBox();
+                updateArrayOverlay();
+            }
+        });
+    </script>
+</body>
+</html>
+            

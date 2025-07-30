@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圖片拼接A4工具 - 支援最多24張</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .upload-subtext {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .image-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            aspect-ratio: 1;
+        }
+
+        .image-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-item .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #ff4757;
+            transition: all 0.3s ease;
+        }
+
+        .image-item .remove-btn:hover {
+            background: #ff4757;
+            color: white;
+        }
+
+        .image-item .number {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .layout-section {
+            padding: 30px 40px;
+            background: #f0f2ff;
+            border-top: 1px solid #e0e6ed;
+        }
+
+        .layout-options {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .layout-option {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 280px;
+        }
+
+        .layout-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .layout-option.active {
+            border-color: #667eea;
+            background: #f8f9ff;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .layout-option h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .layout-option p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .layout-preview {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .layout-preview .mini-rect {
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        .layout-preview.square .mini-rect {
+            width: 12px;
+            height: 12px;
+        }
+
+        .layout-preview.rectangle .mini-rect {
+            width: 10px;
+            height: 14px;
+        }
+
+        .preview-section {
+            padding: 40px;
+            background: #f8f9ff;
+            border-top: 1px solid #e0e6ed;
+        }
+
+        .page-info {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .a4-preview {
+            max-width: 500px;
+            margin: 0 auto 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 20px;
+            aspect-ratio: 297/210; /* A4橫向 */
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .a4-preview.portrait {
+            aspect-ratio: 210/297; /* A4縱向 */
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+            height: calc(100% - 25px); /* 為浮水印留出空間 */
+        }
+
+        .grid-item {
+            background: #f5f5f5;
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            color: #999;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-container.square .grid-item {
+            aspect-ratio: 1; /* 正方形 */
+        }
+
+        .grid-container.rectangle .grid-item {
+            aspect-ratio: 0.85; /* 8.5:10 = 0.85:1 */
+        }
+
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .grid-item.filled {
+            background: #f0f2ff;
+        }
+
+        .grid-item.filled.with-border {
+            border: 1.5px solid #667eea;
+        }
+
+        .grid-container.rectangle {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .page-separator {
+            text-align: center;
+            margin: 20px 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .preview-watermark {
+            position: absolute;
+            bottom: 3px;
+            right: 8px;
+            font-size: 0.7em;
+            color: #667eea;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1px 4px;
+            border-radius: 3px;
+            border: 1px solid #667eea;
+        }
+
+        .controls {
+            padding: 40px;
+            background: #f8f9ff;
+            border-top: 1px solid #e0e6ed;
+            text-align: center;
+        }
+
+        .download-options {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .download-btn.secondary {
+            background: linear-gradient(135deg, #20bf6b 0%, #26d0ce 100%);
+            box-shadow: 0 5px 15px rgba(32, 191, 107, 0.3);
+        }
+
+        .download-btn.tertiary {
+            background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
+            box-shadow: 0 5px 15px rgba(253, 121, 168, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .download-btn.secondary:hover {
+            box-shadow: 0 8px 25px rgba(32, 191, 107, 0.4);
+        }
+
+        .download-btn.tertiary:hover {
+            box-shadow: 0 8px 25px rgba(253, 121, 168, 0.4);
+        }
+
+        .download-btn:disabled {
+            background: #ccc !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .image-count {
+            font-size: 1.1em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .clear-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            cursor: pointer;
+            margin-left: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #ff3742;
+            transform: translateY(-1px);
+        }
+
+        .pages-preview {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 2px solid #e0e6ed;
+            border-radius: 15px;
+            background: #fafbff;
+        }
+
+        .pages-preview::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .pages-preview::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .pages-preview::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .upload-area {
+                padding: 30px 20px;
+            }
+            
+            .image-preview {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 10px;
+            }
+
+            .a4-preview {
+                padding: 15px;
+            }
+
+            .grid-container {
+                gap: 8px;
+            }
+
+            .download-options {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .layout-option {
+                min-width: 240px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📸 圖片拼接A4工具</h1>
+            <p>支援最多24張圖片，自動調整頁數排版</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">點擊選擇圖片或拖放到此處</div>
+                <div class="upload-subtext">支援 JPG、PNG、GIF 格式，最多24張圖片</div>
+            </div>
+            
+            <input type="file" id="fileInput" accept="image/*" multiple>
+            
+            <div class="image-count" id="imageCount">
+                已選擇 0 張圖片
+            </div>
+            
+            <div class="image-preview" id="imagePreview"></div>
+        </div>
+
+        <div class="layout-section">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #667eea;">選擇排版方式</h3>
+            <div class="layout-options">
+                <div class="layout-option active" id="squareLayout">
+                    <h4>🟦 正方形排版</h4>
+                    <p>8.5cm × 8.5cm</p>
+                    <p id="squareLayoutDesc">每頁 3列 × 2行 = 6張圖片</p>
+                    <p style="color: #20bf6b; font-weight: bold;" id="squarePageInfo">A4橫向，最多4頁24張</p>
+                    <div class="layout-preview square" id="squarePreview">
+                        <!-- 動態生成預覽 -->
+                    </div>
+                </div>
+                
+                <div class="layout-option" id="rectangleLayout">
+                    <h4>🟪 長方形排版</h4>
+                    <p>8.5cm × 10cm</p>
+                    <p id="rectangleLayoutDesc">每頁 2列 × 2行 = 4張圖片</p>
+                    <p style="color: #fd79a8; font-weight: bold;" id="rectanglePageInfo">A4縱向，最多6頁24張</p>
+                    <div class="layout-preview rectangle" id="rectanglePreview">
+                        <!-- 動態生成預覽 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 外框線開關 -->
+            <div style="text-align: center; margin-top: 25px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h4 style="color: #667eea; margin-bottom: 15px;">🎨 外框線設定</h4>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 1em; color: #555;">
+                        <input type="checkbox" id="borderToggle" checked style="transform: scale(1.2);">
+                        <span>顯示圖片外框線</span>
+                    </label>
+                    <span style="color: #888; font-size: 0.9em;">(建議開啟，方便裁切)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <div class="page-info" id="pageInfo">
+                請選擇圖片開始排版
+            </div>
+            
+            <div class="pages-preview" id="pagesPreview">
+                <!-- 動態生成多頁預覽 -->
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="download-options">
+                <button class="download-btn" id="pdfBtn" disabled>
+                    📄 下載PDF文件 (推薦)
+                </button>
+                <button class="download-btn secondary" id="imageBtn" disabled>
+                    🖼️ 下載PNG圖片
+                </button>
+                <button class="download-btn tertiary" id="printBtn" disabled>
+                    🖨️ 直接列印
+                </button>
+            </div>
+            
+            <div class="status" id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedImages = [];
+        let currentLayout = 'square'; // 'square' or 'rectangle'
+        let showBorder = true; // 外框線開關狀態
+        const maxImages = 24;
+
+        // 排版設定
+        const layoutConfig = {
+            square: {
+                imagesPerPage: 6,
+                maxPages: 4,
+                cols: 3,
+                rows: 2,
+                orientation: 'landscape'
+            },
+            rectangle: {
+                imagesPerPage: 4,
+                maxPages: 6,
+                cols: 2,
+                rows: 2,
+                orientation: 'portrait'
+            }
+        };
+
+        // 取得所有DOM元素
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const squareLayout = document.getElementById('squareLayout');
+        const rectangleLayout = document.getElementById('rectangleLayout');
+        const borderToggle = document.getElementById('borderToggle');
+        const pagesPreview = document.getElementById('pagesPreview');
+        const pageInfo = document.getElementById('pageInfo');
+        const pdfBtn = document.getElementById('pdfBtn');
+        const imageBtn = document.getElementById('imageBtn');
+        const printBtn = document.getElementById('printBtn');
+        const status = document.getElementById('status');
+        const imageCount = document.getElementById('imageCount');
+        const squarePreview = document.getElementById('squarePreview');
+        const rectanglePreview = document.getElementById('rectanglePreview');
+
+        // 初始化
+        updateLayoutPreviews();
+
+        // 排版選擇事件
+        squareLayout.addEventListener('click', () => {
+            currentLayout = 'square';
+            updateLayoutSelection();
+            updatePagesPreview();
+        });
+
+        rectangleLayout.addEventListener('click', () => {
+            currentLayout = 'rectangle';
+            updateLayoutSelection();
+            updatePagesPreview();
+        });
+
+        // 外框線開關事件
+        borderToggle.addEventListener('change', (e) => {
+            showBorder = e.target.checked;
+            showStatus(showBorder ? '✅ 已開啟外框線' : '❌ 已關閉外框線', 'success');
+            updatePagesPreview();
+        });
+
+        // 更新排版預覽圖示
+        function updateLayoutPreviews() {
+            // 正方形預覽
+            squarePreview.innerHTML = '';
+            for (let i = 0; i < 6; i++) {
+                const rect = document.createElement('div');
+                rect.className = 'mini-rect';
+                squarePreview.appendChild(rect);
+            }
+
+            // 長方形預覽
+            rectanglePreview.innerHTML = '';
+            for (let i = 0; i < 4; i++) {
+                const rect = document.createElement('div');
+                rect.className = 'mini-rect';
+                rectanglePreview.appendChild(rect);
+            }
+        }
+
+        // 更新排版選擇狀態
+        function updateLayoutSelection() {
+            squareLayout.classList.toggle('active', currentLayout === 'square');
+            rectangleLayout.classList.toggle('active', currentLayout === 'rectangle');
+        }
+
+        // 計算需要的頁數
+        function calculatePages() {
+            const config = layoutConfig[currentLayout];
+            const totalImages = selectedImages.length;
+            return Math.ceil(totalImages / config.imagesPerPage);
+        }
+
+        // 更新頁面資訊
+        function updatePageInfo() {
+            const totalImages = selectedImages.length;
+            const config = layoutConfig[currentLayout];
+            const pages = calculatePages();
+            
+            if (totalImages === 0) {
+                pageInfo.textContent = '請選擇圖片開始排版';
+                pageInfo.style.background = 'rgba(102, 126, 234, 0.1)';
+                pageInfo.style.color = '#667eea';
+            } else {
+                const layoutName = currentLayout === 'square' ? '正方形' : '長方形';
+                const orientation = config.orientation === 'landscape' ? '橫向' : '縱向';
+                pageInfo.innerHTML = `
+                    <div>📊 當前排版：${layoutName} (${orientation})</div>
+                    <div>📸 圖片數量：${totalImages} 張</div>
+                    <div>📄 頁面數量：${pages} 頁 (每頁${config.imagesPerPage}張)</div>
+                `;
+                pageInfo.style.background = totalImages > config.maxPages * config.imagesPerPage 
+                    ? 'rgba(255, 71, 87, 0.1)' 
+                    : 'rgba(32, 191, 107, 0.1)';
+                pageInfo.style.color = totalImages > config.maxPages * config.imagesPerPage 
+                    ? '#ff4757' 
+                    : '#20bf6b';
+            }
+        }
+
+        // 更新多頁預覽
+        function updatePagesPreview() {
+            const config = layoutConfig[currentLayout];
+            const pages = calculatePages();
+            
+            pagesPreview.innerHTML = '';
+            
+            for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
+                const pageDiv = document.createElement('div');
+                pageDiv.style.marginBottom = '30px';
+                
+                // 頁面標題
+                const pageTitle = document.createElement('h4');
+                pageTitle.textContent = `📄 第 ${pageIndex + 1} 頁`;
+                pageTitle.style.textAlign = 'center';
+                pageTitle.style.color = '#667eea';
+                pageTitle.style.marginBottom = '15px';
+                pageDiv.appendChild(pageTitle);
+                
+                // A4預覽容器
+                const a4Container = document.createElement('div');
+                a4Container.className = `a4-preview ${config.orientation === 'portrait' ? 'portrait' : ''}`;
+                
+                // 網格容器
+                const gridContainer = document.createElement('div');
+                gridContainer.className = `grid-container ${currentLayout}`;
+                
+                // 生成網格項目
+                for (let i = 0; i < config.imagesPerPage; i++) {
+                    const imageIndex = pageIndex * config.imagesPerPage + i;
+                    const gridItem = document.createElement('div');
+                    gridItem.className = 'grid-item';
+                    gridItem.setAttribute('data-index', imageIndex);
+                    
+                    if (selectedImages[imageIndex]) {
+                        const img = document.createElement('img');
+                        img.src = selectedImages[imageIndex].dataUrl;
+                        img.alt = selectedImages[imageIndex].name;
+                        gridItem.appendChild(img);
+                        gridItem.classList.add('filled');
+                        
+                        if (showBorder) {
+                            gridItem.classList.add('with-border');
+                        }
+                    } else {
+                        gridItem.textContent = `位置 ${imageIndex + 1}`;
+                    }
+                    
+                    gridContainer.appendChild(gridItem);
+                }
+                
+                a4Container.appendChild(gridContainer);
+                
+                // 浮水印
+                const watermark = document.createElement('div');
+                watermark.className = 'preview-watermark';
+                watermark.textContent = '何老師教學@XueTech';
+                a4Container.appendChild(watermark);
+                
+                pageDiv.appendChild(a4Container);
+                pagesPreview.appendChild(pageDiv);
+            }
+            
+            updatePageInfo();
+        }
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 拖放功能
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        });
+
+        // 文件選擇事件
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        });
+
+        // 處理文件
+        function handleFiles(files) {
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
+            
+            if (selectedImages.length + imageFiles.length > maxImages) {
+                const remaining = maxImages - selectedImages.length;
+                if (remaining > 0) {
+                    imageFiles.splice(remaining);
+                    showStatus(`已選擇前${remaining}張圖片，最多只能選擇${maxImages}張圖片`, 'error');
+                } else {
+                    showStatus(`已達到最大數量${maxImages}張圖片`, 'error');
+                    return;
+                }
+            }
+
+            imageFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageData = {
+                        file: file,
+                        dataUrl: e.target.result,
+                        name: file.name
+                    };
+                    selectedImages.push(imageData);
+                    updateImagePreview();
+                    updatePagesPreview();
+                    updateUI();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 更新圖片預覽
+        function updateImagePreview() {
+            imagePreview.innerHTML = '';
+            selectedImages.forEach((image, index) => {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                imageItem.innerHTML = `
+                    <img src="${image.dataUrl}" alt="${image.name}">
+                    <div class="number">${index + 1}</div>
+                    <button class="remove-btn" onclick="removeImage(${index})">×</button>
+                `;
+                imagePreview.appendChild(imageItem);
+            });
+        }
+
+        // 移除圖片
+        function removeImage(index) {
+            selectedImages.splice(index, 1);
+            updateImagePreview();
+            updatePagesPreview();
+            updateUI();
+        }
+
+        // 清除全部圖片
+        function clearAll() {
+            selectedImages = [];
+            updateImagePreview();
+            updatePagesPreview();
+            updateUI();
+        }
+
+        // 更新UI狀態
+        function updateUI() {
+            const count = selectedImages.length;
+            imageCount.innerHTML = `已選擇 ${count} 張圖片`;
+            
+            if (count > 0) {
+                imageCount.innerHTML += '<button class="clear-btn" onclick="clearAll()">清除全部</button>';
+            }
+            
+            pdfBtn.disabled = count === 0;
+            imageBtn.disabled = count === 0;
+            printBtn.disabled = count === 0;
+            
+            const config = layoutConfig[currentLayout];
+            const maxAllowed = config.maxPages * config.imagesPerPage;
+            
+            if (count > maxAllowed) {
+                showStatus(`超過${currentLayout === 'square' ? '正方形' : '長方形'}排版最大容量(${maxAllowed}張)，請移除多餘圖片`, 'error');
+            } else if (count === maxImages) {
+                showStatus('已選擇24張圖片，已達最大容量！', 'success');
+            }
+        }
+
+        // 顯示狀態訊息
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // 繪製浮水印函數
+        function drawWatermark(ctx, canvasWidth, canvasHeight, pixelsPerCm) {
+            const text = '何老師教學@XueTech';
+            const fontSize = Math.round(0.4 * pixelsPerCm); // 0.4cm 字體大小
+            const padding = Math.round(0.3 * pixelsPerCm);   // 0.3cm 邊距
+            
+            ctx.save();
+            
+            // 設置字體
+            ctx.font = `bold ${fontSize}px Arial, "Microsoft YaHei", sans-serif`;
+            ctx.fillStyle = '#667eea'; // 藍紫色
+            ctx.strokeStyle = '#ffffff'; // 白色描邊
+            ctx.lineWidth = 2;
+            
+            // 測量文字寬度
+            const textMetrics = ctx.measureText(text);
+            const textWidth = textMetrics.width;
+            const textHeight = fontSize;
+            
+            // 計算位置（右下角）
+            const x = canvasWidth - textWidth - padding;
+            const y = canvasHeight - padding;
+            
+            // 繪製白色背景框
+            const bgPadding = 8;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x - bgPadding, y - textHeight - bgPadding, textWidth + bgPadding * 2, textHeight + bgPadding * 2);
+            
+            // 繪製邊框
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x - bgPadding, y - textHeight - bgPadding, textWidth + bgPadding * 2, textHeight + bgPadding * 2);
+            
+            // 繪製文字
+            ctx.fillStyle = '#667eea';
+            ctx.fillText(text, x, y);
+            
+            ctx.restore();
+        }
+
+        // 創建合併圖片
+        async function createMergedImages() {
+            const pixelsPerCm = 300 / 2.54; // 300 DPI conversion
+            const config = layoutConfig[currentLayout];
+            const pages = calculatePages();
+            const canvases = [];
+
+            for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
+                const canvas = await createPageImage(pageIndex, pixelsPerCm, config);
+                canvases.push(canvas);
+            }
+
+            return canvases;
+        }
+
+        // 創建單頁圖片
+        async function createPageImage(pageIndex, pixelsPerCm, config) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 設定畫布尺寸
+            let canvasWidth, canvasHeight;
+            if (config.orientation === 'landscape') {
+                canvasWidth = Math.round(29.7 * pixelsPerCm);   // A4橫向
+                canvasHeight = Math.round(21.0 * pixelsPerCm);
+            } else {
+                canvasWidth = Math.round(21.0 * pixelsPerCm);   // A4縱向
+                canvasHeight = Math.round(29.7 * pixelsPerCm);
+            }
+            
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // 設置白色背景
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // 計算圖片尺寸
+            const imageWidth = Math.round(8.5 * pixelsPerCm);
+            const imageHeight = currentLayout === 'square' 
+                ? Math.round(8.5 * pixelsPerCm) 
+                : Math.round(10 * pixelsPerCm);
+            
+            const cols = config.cols;
+            const rows = config.rows;
+            const borderWidth = Math.round(0.015 * pixelsPerCm);
+            
+            // 計算佈局
+            const totalImageWidth = imageWidth * cols;
+            const totalImageHeight = imageHeight * rows;
+            const marginX = (canvasWidth - totalImageWidth) / (cols + 1);
+            const marginY = (canvasHeight - totalImageHeight) / (rows + 1);
+            
+            // 載入並繪製這一頁的圖片
+            const startIndex = pageIndex * config.imagesPerPage;
+            const endIndex = Math.min(startIndex + config.imagesPerPage, selectedImages.length);
+            const pageImages = selectedImages.slice(startIndex, endIndex);
+            
+            const promises = pageImages.map((imageData, index) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const row = Math.floor(index / cols);
+                        const col = index % cols;
+                        const x = marginX + col * (imageWidth + marginX);
+                        const y = marginY + row * (imageHeight + marginY);
+                        
+                        // 繪製圖片
+                        ctx.drawImage(img, x, y, imageWidth, imageHeight);
+                        
+                        // 繪製外框線 (根據開關狀態)
+                        if (showBorder) {
+                            ctx.strokeStyle = '#667eea';
+                            ctx.lineWidth = borderWidth;
+                            ctx.strokeRect(x, y, imageWidth, imageHeight);
+                        }
+                        
+                        resolve();
+                    };
+                    img.src = imageData.dataUrl;
+                });
+            });
+            
+            await Promise.all(promises);
+            
+            // 繪製浮水印
+            drawWatermark(ctx, canvasWidth, canvasHeight, pixelsPerCm);
+            
+            return canvas;
+        }
+
+        // PDF下載事件
+        pdfBtn.addEventListener('click', async () => {
+            if (selectedImages.length === 0) return;
+
+            try {
+                showStatus('正在生成PDF文件...', 'success');
+                
+                const canvases = await createMergedImages();
+                const { jsPDF } = window.jspdf;
+                const config = layoutConfig[currentLayout];
+                
+                const pdf = new jsPDF({
+                    orientation: config.orientation,
+                    unit: 'cm',
+                    format: 'a4'
+                });
+                
+                // 添加所有頁面
+                canvases.forEach((canvas, index) => {
+                    if (index > 0) {
+                        pdf.addPage();
+                    }
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    if (config.orientation === 'landscape') {
+                        pdf.addImage(imgData, 'PNG', 0, 0, 29.7, 21.0);
+                    } else {
+                        pdf.addImage(imgData, 'PNG', 0, 0, 21.0, 29.7);
+                    }
+                });
+                
+                // 下載PDF
+                const layoutName = currentLayout === 'square' ? '正方形' : '長方形';
+                const pages = canvases.length;
+                pdf.save(`圖片拼接_${layoutName}排版_${pages}頁_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+                
+                showStatus(`PDF文件下載成功！共${pages}頁`, 'success');
+            } catch (error) {
+                console.error('生成PDF文件失敗:', error);
+                showStatus('生成PDF文件失敗，請重試', 'error');
+            }
+        });
+
+        // PNG圖片下載事件
+        imageBtn.addEventListener('click', async () => {
+            if (selectedImages.length === 0) return;
+
+            try {
+                showStatus('正在生成PNG圖片...', 'success');
+                
+                const canvases = await createMergedImages();
+                const layoutName = currentLayout === 'square' ? '正方形' : '長方形';
+                const dateStr = new Date().toLocaleDateString().replace(/\//g, '-');
+                
+                // 分別下載每頁
+                canvases.forEach((canvas, index) => {
+                    const imageDataUrl = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = imageDataUrl;
+                    a.download = `圖片拼接_${layoutName}排版_第${index + 1}頁_${dateStr}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                });
+                
+                showStatus(`PNG圖片下載成功！共${canvases.length}張`, 'success');
+            } catch (error) {
+                console.error('生成PNG圖片失敗:', error);
+                showStatus('生成PNG圖片失敗，請重試', 'error');
+            }
+        });
+
+        // 直接列印事件
+        printBtn.addEventListener('click', async () => {
+            if (selectedImages.length === 0) return;
+
+            try {
+                showStatus('正在準備列印...', 'success');
+                
+                const canvases = await createMergedImages();
+                const config = layoutConfig[currentLayout];
+                const printWindow = window.open('', '_blank');
+                
+                let htmlContent = `
+                    <html>
+                    <head>
+                        <title>列印圖片（${canvases.length}頁）</title>
+                        <style>
+                            @media print {
+                                @page {
+                                    size: A4 ${config.orientation};
+                                    margin: 0;
+                                }
+                                body {
+                                    margin: 0;
+                                    padding: 0;
+                                }
+                                .page {
+                                    width: 100%;
+                                    height: 100vh;
+                                    page-break-after: always;
+                                    display: flex;
+                                    justify-content: center;
+                                    align-items: center;
+                                }
+                                .page:last-child {
+                                    page-break-after: avoid;
+                                }
+                                img {
+                                    width: 100%;
+                                    height: 100%;
+                                    object-fit: contain;
+                                }
+                            }
+                            body {
+                                margin: 0;
+                                font-family: Arial, sans-serif;
+                            }
+                            .page {
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                min-height: 100vh;
+                                margin-bottom: 20px;
+                                position: relative;
+                            }
+                            .page h3 {
+                                position: absolute;
+                                top: 10px;
+                                color: #666;
+                            }
+                            img {
+                                max-width: 100%;
+                                max-height: 90vh;
+                                border: 1px solid #ddd;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                `;
+                
+                canvases.forEach((canvas, index) => {
+                    const imageDataUrl = canvas.toDataURL('image/png');
+                    htmlContent += `
+                        <div class="page">
+                            <h3>第${index + 1}頁</h3>
+                            <img src="${imageDataUrl}" ${index === canvases.length - 1 ? 'onload="setTimeout(() => window.print(), 500);"' : ''}>
+                        </div>
+                    `;
+                });
+                
+                htmlContent += `
+                    </body>
+                    </html>
+                `;
+                
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+                showStatus(`列印視窗已開啟！共${canvases.length}頁`, 'success');
+            } catch (error) {
+                console.error('準備列印失敗:', error);
+                showStatus('準備列印失敗，請重試', 'error');
+            }
+        });
+
+        // 初始化預覽
+        updatePagesPreview();
+
+    </script>
+</body>
+</html>
